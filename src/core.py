@@ -51,29 +51,23 @@ class TxIn(DataClassJson, dict):
     pub_key: str
 
     # Check if the TxIn is Valid
-    def is_valid(self, is_coinbase: bool) -> bool:
-        if is_coinbase:
-            # Coinbase payout must be None.
-            if self.payout is not None:
-                logger.debug("TxIn: Payout is not None for Coinbase Tx")
+    def is_valid(self) -> bool:
+        try:
+            # Ensure the Transaction Id is valid hex string
+            if not len(self.payout.txid or "") == consts.HASH_LENGTH_HEX:
+                logger.debug("TxIn: TxID of invalid length")
                 return False
-        else:
-            try:
-                # Ensure the Transaction Id is valid hex string
-                if not len(self.payout.txid or "") == consts.HASH_LENGTH_HEX:
-                    logger.debug("TxIn: TxID of invalid length")
-                    return False
-                # Ensure the payment index is valid
-                if not int(self.payout.vout) >= 0:
-                    logger.debug("TxIn: Payment index(vout) invalid")
-                    return False
-                # Ensure the sig and pubkey are valid
-                if len(self.sig or "") == 0 or len(self.pub_key or "") == 0:
-                    logger.debug("TxIN: Sig/Pubkey of invalid length")
-                    return False
-            except Exception as e:
-                logger.error(e)
+            # Ensure the payment index is valid
+            if not int(self.payout.vout) >= 0:
+                logger.debug("TxIn: Payment index(vout) invalid")
                 return False
+            # Ensure the sig and pubkey are valid
+            if len(self.sig or "") == 0 or len(self.pub_key or "") == 0:
+                logger.debug("TxIN: Sig/Pubkey of invalid length")
+                return False
+        except Exception as e:
+            logger.error(e)
+            return False
         return True
 
 
@@ -88,7 +82,7 @@ class Transaction(DataClassJson):
         return int(dhash(self), 16)
 
     def __eq__(self, other):
-        attrs_sam = self.is_coinbase == other.is_coinbase and self.version == other.version
+        attrs_sam = self.version == other.version
         attrs_same = attrs_sam and self.timestamp == other.timestamp and self.locktime == other.locktime
         txin_same = True
         for txin in self.vin.values():
@@ -131,7 +125,7 @@ class Transaction(DataClassJson):
 
         # Verify all Inputs are valid - 4
         for index, inp in self.vin.items():
-            if not inp.is_valid(self.is_coinbase):
+            if not inp.is_valid():
                 logger.debug("Transaction: Invalid TxIn")
                 return False
 
@@ -202,7 +196,6 @@ class BlockHeader(DataClassJson):
 
     # Signature of the authority who mined this block
     signature: str
-
 
 
 @dataclass
@@ -278,7 +271,6 @@ class Chain:
     # The UTXO Set
     utxo: Utxo = field(default_factory=Utxo)
 
-
     def __eq__(self, other):
         for i, h in enumerate(self.header_list):
             if dhash(h) != dhash(other.header_list[i]):
@@ -305,14 +297,13 @@ class Chain:
         block_transactions: List[Transaction] = block.transactions
         for t in block_transactions:
             thash = dhash(t)
-            if not t.is_coinbase:
-                # Remove the spent outputs
-                for tinput in t.vin:
-                    so = t.vin[tinput].payout
-                    self.utxo.remove(so)
+            # Remove the spent outputs
+            for tinput in t.vin:
+                so = t.vin[tinput].payout
+                self.utxo.remove(so)
             # Add new unspent outputs
             for touput in t.vout:
-                self.utxo.set(SingleOutput(txid=thash, vout=touput), t.vout[touput], block.header, t.is_coinbase)
+                self.utxo.set(SingleOutput(txid=thash, vout=touput), t.vout[touput], block.header)
 
     def is_transaction_valid(self, transaction: Transaction):
         if not transaction.is_valid():
@@ -351,7 +342,7 @@ class Chain:
             return False
 
         # ensure sum of amounts of all inputs is > sum of amounts of all outputs
-        if not sum_of_all_inputs > sum_of_all_outputs and not transaction.is_coinbase:
+        if not sum_of_all_inputs > sum_of_all_outputs:
             logger.debug("Chain: input sum less than output sum")
             return False
 
@@ -376,17 +367,16 @@ class Chain:
 
         return True
 
-    def add_block(self, block: Block) -> bool:
-        if self.is_block_valid(block):
+    def add_block(self, block: Block, is_genesis: bool) -> bool:
+        if is_genesis or self.is_block_valid(block):
             self.header_list.append(block.header)
-            self.update_utxo(block)
+            if not is_genesis:
+                self.update_utxo(block)
             self.length = len(self.header_list)
             add_block_to_db(block)
             logger.info("Chain: Added Block " + str(block))
             return True
         return False
-
-
 
 
 class BlockChain:
@@ -417,7 +407,6 @@ class BlockChain:
         # Save Active Chain to DB
         write_header_list_to_db(self.active_chain.header_list)
 
-
     def build_from_header_list(self, hlist: List[str]):
         try:
             for header in hlist:
@@ -434,14 +423,14 @@ class BlockChain:
         blockAdded = False
 
         chain = self.active_chain
-        if chain.length == 0 or block.header.prev_block_hash == dhash(chain.header_list[-1]):
-            if chain.add_block(block):
+        is_genesis = chain.length == 0
+        if is_genesis or block.header.prev_block_hash == dhash(chain.header_list[-1]):
+            if chain.add_block(block, is_genesis):
                 self.update_active_chain()
                 self.remove_transactions_from_mempool(block)
                 blockAdded = True
-        
-        return blockAdded
 
+        return blockAdded
 
 
 genesis_block_transaction = [
@@ -464,7 +453,7 @@ genesis_block_header = BlockHeader(
     height=0,
     merkle_root=merkle_hash(genesis_block_transaction),
     timestamp=1535646190,
-    signature=''
+    signature="",
 )
 genesis_block = Block(header=genesis_block_header, transactions=genesis_block_transaction)
 
