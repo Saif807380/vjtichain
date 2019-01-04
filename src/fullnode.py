@@ -12,7 +12,7 @@ from bottle import BaseTemplate, Bottle, request, response, static_file, templat
 
 import utils.constants as consts
 from core import Block, BlockChain, SingleOutput, Transaction, TxIn, TxOut, genesis_block
-from miner import Miner
+from authority import Authority, authority_rules
 from utils.logger import logger
 from utils.storage import get_block_from_db, get_wallet_from_db, read_header_list_from_db
 from utils.utils import compress, decompress, dhash, get_time_difference_from_now_secs
@@ -29,22 +29,14 @@ PEER_LIST: List[Dict[str, Any]] = []
 
 MY_WALLET = Wallet()
 
-miner = Miner()
+miner = Authority()
 
 
 def mining_thread_task():
     while True:
         if not miner.is_mining():
-            mlist = list(BLOCKCHAIN.mempool)
-            fees, size = miner.calculate_transaction_fees_and_size(mlist)
-            time_diff = -get_time_difference_from_now_secs(BLOCKCHAIN.active_chain.header_list[-1].timestamp)
-            if (
-                fees >= 1
-                or (size >= consts.MAX_BLOCK_SIZE_KB / 1.6)
-                or (time_diff > consts.AVERAGE_BLOCK_MINE_INTERVAL / consts.BLOCK_MINING_SPEEDUP)
-            ):
-                miner.start_mining(BLOCKCHAIN.mempool, BLOCKCHAIN.active_chain, MY_WALLET.public_key)
-        time.sleep(5)
+            miner.start_mining(BLOCKCHAIN.mempool, BLOCKCHAIN.active_chain, MY_WALLET)
+        time.sleep(consts.MINING_INTERVAL_THRESHOLD)
 
 
 def send_to_all_peers(url, data):
@@ -113,24 +105,8 @@ def get_block_header_hash(height):
     return dhash(BLOCKCHAIN.active_chain.header_list[height])
 
 
-def find_fork_height(peer):
-    fork_height = BLOCKCHAIN.active_chain.length - 1
-    if check_block_with_peer(peer, get_block_header_hash(fork_height)):
-        return fork_height
-    else:
-        left = 0
-        right = BLOCKCHAIN.active_chain.length - 1
-        while left < right:
-            mid = (left + right) // 2
-            if check_block_with_peer(peer, get_block_header_hash(mid)):
-                left = mid + 1
-            else:
-                right = mid
-        return left
-
-
 def sync(max_peer):
-    fork_height = find_fork_height(max_peer)
+    fork_height = BLOCKCHAIN.active_chain.height
     r = requests.post(get_peer_url(max_peer) + "/getblockhashes", data={"myheight": fork_height})
     hash_list = json.loads(decompress(r.text.encode()))
     # logger.debug("Received the Following HashList from peer " + str(get_peer_url(max_peer)))
@@ -172,9 +148,9 @@ def check_balance():
     return int(current_balance)
 
 
-def send_bounty(bounty: int, receiver_public_key: str, fees: int):
+def send_bounty(bounty: int, receiver_public_key: str):
     current_balance = check_balance()
-    if current_balance < bounty + fees:
+    if current_balance < bounty:
         print("Insuficient balance ")
         print("Current balance : " + str(current_balance))
         print("You need " + str(current_balance - bounty) + "more money")
@@ -183,13 +159,11 @@ def send_bounty(bounty: int, receiver_public_key: str, fees: int):
         transaction = Transaction(
             version=1,
             locktime=0,
-            timestamp=2,
-            is_coinbase=False,
-            fees=0,
+            timestamp=int(time.time()),
             vin={},
             vout={0: TxOut(amount=bounty, address=receiver_public_key), 1: TxOut(amount=0, address=MY_WALLET.public_key)},
         )
-        calculate_transaction_fees(transaction, MY_WALLET, bounty, fees)
+        create_transaction(transaction, MY_WALLET, bounty)
 
         logger.debug(transaction)
         logger.info("Wallet: Attempting to Send Transaction")
@@ -205,23 +179,18 @@ def send_bounty(bounty: int, receiver_public_key: str, fees: int):
             logger.info("Wallet: Transaction Sent, Wait for it to be Mined")
 
 
-def calculate_transaction_fees(tx: Transaction, w: Wallet, bounty: int, fees: int):
+def create_transaction(tx: Transaction, w: Wallet, bounty: int):
     current_amount = 0
     i = 0
     for so, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
         tx_out = utxo_list[0]
-        if utxo_list[2]:
-            # check for coinbase TxIn Maturity
-            if not (BLOCKCHAIN.active_chain.length - utxo_list[1].height) >= consts.COINBASE_MATURITY:
-                continue
-        if current_amount >= bounty + fees:
+        if current_amount >= bounty:
             break
         if tx_out.address == w.public_key:
             current_amount += tx_out.amount
             tx.vin[i] = TxIn(payout=SingleOutput.from_json(so), pub_key=w.public_key, sig="")
             i += 1
-    tx.vout[1].amount = current_amount - bounty - fees
-    tx.fees = fees
+    tx.vout[1].amount = current_amount - bounty
     tx.sign(w)
 
 
@@ -381,7 +350,7 @@ def post_send():
         amt = int(bounty)
         if check_balance() > amt:
             message = "Your scoins are sent !!!"
-            send_bounty(amt, publickey, consts.FEES)
+            send_bounty(amt, publickey)
         else:
             message = "You have insufficient balance !!!"
         return template("send.html", message=message)
@@ -409,16 +378,8 @@ def sendinfo():
         + "<br>"
         + dhash(BLOCKCHAIN.active_chain.header_list[-1])
         + "<br>"
-        + "Number of chains "
-        + str(len(BLOCKCHAIN.chains))
-        + "<br>"
         + "Balance "
         + str(check_balance())
-        + "<br>"
-        + "Difficulty: "
-        + str(BLOCKCHAIN.active_chain.target_difficulty)
-        + "<br>Block reward "
-        + str(BLOCKCHAIN.active_chain.current_block_reward())
         + "<br>Public Key: <br>"
         + str(get_wallet_from_db(consts.MINER_SERVER_PORT)[1])
     )
@@ -449,18 +410,15 @@ def render_block_header(hdr):
         + ")</td></tr>"
     )
 
-    html += "<tr><th>" + "Nonce" + "</th>"
-    html += "<td>" + str(hdr.nonce) + "</td></tr>"
-
     # get block
     block = Block.from_json(get_block_from_db(dhash(hdr))).object()
     
     html += "<tr><th>" + "Transactions" + "</th>"
     html += "<td>" + str(len(block.transactions)) + "</td></tr>"
 
-    for i, transaction in enumerate(block.transactions):
-        s = "coinbase: " + str(transaction.is_coinbase) + ", fees: " + str(transaction.fees)
-        html += "<tr><th>Transaction " + str(i) + "</th><td>" + str(s) + "</td></tr>"
+    # for i, transaction in enumerate(block.transactions):
+    #     s = "coinbase: " + str(transaction.is_coinbase) + ", fees: " + str(transaction.fees)
+    #     html += "<tr><th>Transaction " + str(i) + "</th><td>" + str(s) + "</td></tr>"
     
     html += "</table>"
     return str(html)
@@ -470,15 +428,14 @@ def render_block_header(hdr):
 def visualize_chain():
     data = []
     start = BLOCKCHAIN.active_chain.length - 10 if BLOCKCHAIN.active_chain.length > 10 else 0
-    for i, chain in enumerate(BLOCKCHAIN.chains):
-        headers = []
-        for hdr in chain.header_list:
-            d = {}
-            d["hash"] = dhash(hdr)[-5:]
-            d["time"] = hdr.timestamp
-            d["data"] = render_block_header(hdr)
-            headers.append(d)
-        data.append(headers)
+    headers = []
+    for hdr in BLOCKCHAIN.active_chain.header_list:
+        d = {}
+        d["hash"] = dhash(hdr)[-5:]
+        d["time"] = hdr.timestamp
+        d["data"] = render_block_header(hdr)
+        headers.append(d)
+    data.append(headers)
     return template("chains.html", data=data, start=start)
 
 

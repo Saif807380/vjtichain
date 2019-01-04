@@ -1,0 +1,15 @@
+{
+    "authorities": [
+        {
+            "name": "Node 2",
+            "order": 1,
+            "pubkey": "MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE76RJY7pgn55Q6/HtBqPPb9yuOfBf0Bz+FdDEcRDDbAQYgLNMWI7PjDraMleICkBFyVN3sllFTu0lsmE0K/CufQ=="
+        },
+        {
+            "name": "Node 2",
+            "order": 0,
+            "pubkey": "MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAExcIsvLH3vegArqtP7wEdyly11xAcrpV4IBIUCVM+HXoPMMpNFX8hYDjOPL4IUT4swqDkrhj1gS+XWukiGpttzQ=="
+        }
+    ],
+    "interval": 3600
+}

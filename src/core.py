@@ -14,6 +14,8 @@ from utils.logger import logger
 from utils.storage import add_block_to_db, check_block_in_db, get_block_from_db, remove_block_from_db, write_header_list_to_db
 from utils.utils import dhash, get_time_difference_from_now_secs, lock, merkle_hash
 from wallet import Wallet
+from authority_rules import authority_rules
+
 
 
 @dataclass
@@ -300,7 +302,8 @@ class Chain:
             # Remove the spent outputs
             for tinput in t.vin:
                 so = t.vin[tinput].payout
-                self.utxo.remove(so)
+                if so:
+                    self.utxo.remove(so)
             # Add new unspent outputs
             for touput in t.vout:
                 self.utxo.set(SingleOutput(txid=thash, vout=touput), t.vout[touput], block.header)
@@ -314,20 +317,19 @@ class Chain:
         sign_copy_of_tx = copy.deepcopy(transaction)
         sign_copy_of_tx.vin = {}
         for inp, tx_in in transaction.vin.items():
-            if tx_in.payout is not None:
-                tx_out, block_hdr = self.utxo.get(tx_in.payout)
-                # ensure the TxIn is present in utxo, i.e exists and has not been spent
-                if block_hdr is None:
-                    logger.debug(tx_in.payout)
-                    logger.debug("Chain: Transaction not present in utxo")
-                    return False
+            tx_out, block_hdr = self.utxo.get(tx_in.payout)
+            # ensure the TxIn is present in utxo, i.e exists and has not been spent
+            if block_hdr is None:
+                logger.debug(tx_in.payout)
+                logger.debug("Chain: Transaction not present in utxo")
+                return False
 
-                # Verify that the Signature is valid for all inputs
-                if not Wallet.verify(sign_copy_of_tx.to_json(), tx_in.sig, tx_out.address):
-                    logger.debug("Chain: Invalid Signature")
-                    return False
+            # Verify that the Signature is valid for all inputs
+            if not Wallet.verify(sign_copy_of_tx.to_json(), tx_in.sig, tx_out.address):
+                logger.debug("Chain: Invalid Signature")
+                return False
 
-                sum_of_all_inputs += tx_out.amount
+            sum_of_all_inputs += tx_out.amount
 
         if sum_of_all_inputs > consts.MAX_SCOINS_POSSIBLE or sum_of_all_inputs < 0:
             logger.debug("Chain: Invalid input Amount")
@@ -342,7 +344,9 @@ class Chain:
             return False
 
         # ensure sum of amounts of all inputs is > sum of amounts of all outputs
-        if not sum_of_all_inputs > sum_of_all_outputs:
+        if not sum_of_all_inputs == sum_of_all_outputs:
+            logger.debug(str(sum_of_all_inputs))
+            logger.debug(str(sum_of_all_outputs))
             logger.debug("Chain: input sum less than output sum")
             return False
 
@@ -364,14 +368,22 @@ class Chain:
             if not self.is_transaction_valid(tx):
                 logger.debug("Chain: Transaction not valid")
                 return False
-
+        
+        # Validate Authority Signature
+        timestamp = block.header.timestamp
+        turn = int(timestamp / authority_rules["interval"]) % len(authority_rules["authorities"])
+        for authority in authority_rules["authorities"]:
+            if authority["order"] == turn:
+                blk_hdr = copy.deepcopy(block.header)
+                blk_hdr.signature = ""
+                if not Wallet.verify(dhash(blk_hdr), block.header.signature, authority['pubkey']):
+                    return False
         return True
 
     def add_block(self, block: Block, is_genesis: bool) -> bool:
         if is_genesis or self.is_block_valid(block):
             self.header_list.append(block.header)
-            if not is_genesis:
-                self.update_utxo(block)
+            self.update_utxo(block)
             self.length = len(self.header_list)
             add_block_to_db(block)
             logger.info("Chain: Added Block " + str(block))
@@ -441,7 +453,9 @@ genesis_block_transaction = [
         vin={0: TxIn(payout=None, sig=consts.GENESIS_BLOCK_SIGNATURE, pub_key="")},
         vout={
             0: TxOut(amount=consts.INITIAL_BLOCK_REWARD, address=consts.WALLET_PUBLIC),
-            1: TxOut(amount=0, address=consts.WALLET_PUBLIC),
+            1: TxOut(amount=100000, address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE76RJY7pgn55Q6/HtBqPPb9yuOfBf0Bz+FdDEcRDDbAQYgLNMWI7PjDraMleICkBFyVN3sllFTu0lsmE0K/CufQ=="),
+            2: TxOut(amount=100000, address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAExcIsvLH3vegArqtP7wEdyly11xAcrpV4IBIUCVM+HXoPMMpNFX8hYDjOPL4IUT4swqDkrhj1gS+XWukiGpttzQ=="),
+            3: TxOut(amount=100000, address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEMKkj/B4LqqUWT6FEbZRoSLvGbfC93yD7Zit+GWmaY/UXUiL0LOwIPljBZ/16sFMwxgCO+nlYGFqcTmftaHKmgA=="),
         },
     )
 ]
