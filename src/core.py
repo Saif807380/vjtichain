@@ -163,12 +163,6 @@ class Transaction(DataClassJson):
 
         return newtransaction
 
-    # Whether this transaction is coinbase transaction
-    is_coinbase: bool
-
-    # The fees received on mining this transaction
-    fees: int = field(repr=False)
-
     # Version for this transaction
     version: int
 
@@ -206,11 +200,9 @@ class BlockHeader(DataClassJson):
     # The approximate creation time of this block (seconds from Unix Epoch)
     timestamp: int
 
-    # Proof-of-Work target as number of zero bits in the beginning of the hash
-    target_difficulty: int = field(repr=False)
+    # Signature of the authority who mined this block
+    signature: str
 
-    # Nonce to try to get a hash below target_difficulty
-    nonce: int
 
 
 @dataclass
@@ -239,14 +231,6 @@ class Block(DataClassJson):
             logger.debug("Block: Size Exceeded/No. of Tx==0")
             return False
 
-        # The first and only first transaction should be coinbase -2
-        transaction_status = [transaction.is_coinbase for transaction in self.transactions]
-        first_transaction = transaction_status[0]
-        other_transactions = transaction_status[1:]
-        if not first_transaction or any(other_transactions):
-            logger.debug("Block: First Tx is not Coinbase")
-            return False
-
         # Make sure each transaction is valid -3
         for tx in self.transactions:
             if not tx.is_valid():
@@ -262,7 +246,7 @@ class Block(DataClassJson):
 
 @dataclass
 class Utxo:
-    # Mapping from string repr of SingleOutput to List[TxOut, Blockheader, is_Coinbase]
+    # Mapping from string repr of SingleOutput to List[TxOut, Blockheader]
     utxo: Dict[str, List[Any]] = field(default_factory=dict)
 
     def get(self, so: SingleOutput) -> Optional[List[Any]]:
@@ -271,9 +255,9 @@ class Utxo:
             return self.utxo[so_str]
         return None, None, None
 
-    def set(self, so: SingleOutput, txout: TxOut, blockheader: BlockHeader, is_coinbase: bool):
+    def set(self, so: SingleOutput, txout: TxOut, blockheader: BlockHeader):
         so_str = so.to_json()
-        self.utxo[so_str] = [txout, blockheader, is_coinbase]
+        self.utxo[so_str] = [txout, blockheader]
 
     def remove(self, so: SingleOutput) -> bool:
         so_str = so.to_json()
@@ -294,11 +278,6 @@ class Chain:
     # The UTXO Set
     utxo: Utxo = field(default_factory=Utxo)
 
-    # The Target difficulty
-    target_difficulty: int = consts.INITIAL_BLOCK_DIFFICULTY
-
-    # The Number of Coins in existence
-    total_scoins: int = 0
 
     def __eq__(self, other):
         for i, h in enumerate(self.header_list):
@@ -345,16 +324,9 @@ class Chain:
         sign_copy_of_tx.vin = {}
         for inp, tx_in in transaction.vin.items():
             if tx_in.payout is not None:
-                tx_out, block_hdr, is_coinbase = self.utxo.get(tx_in.payout)
+                tx_out, block_hdr = self.utxo.get(tx_in.payout)
                 # ensure the TxIn is present in utxo, i.e exists and has not been spent
-                if block_hdr is not None:
-                    if is_coinbase:
-                        # check for coinbase TxIn Maturity
-                        if not self.length - block_hdr.height >= consts.COINBASE_MATURITY:
-                            logger.debug(str(self.length) + " " + str(block_hdr.height))
-                            logger.debug("Chain: Coinbase not matured")
-                            return False
-                else:
+                if block_hdr is None:
                     logger.debug(tx_in.payout)
                     logger.debug("Chain: Transaction not present in utxo")
                     return False
@@ -383,11 +355,6 @@ class Chain:
             logger.debug("Chain: input sum less than output sum")
             return False
 
-        # ensure that the advertised transaction fees is valid
-        if not sum_of_all_inputs - sum_of_all_outputs == transaction.fees and not transaction.is_coinbase:
-            logger.debug("Chain: transaction fees not valid")
-            return False
-
         return True
 
     def is_block_valid(self, block: Block):
@@ -395,31 +362,6 @@ class Chain:
         if not block.is_valid():
             logger.debug("Block is not valid")
             return False
-
-        # Block hash should have proper difficulty -2
-        if not block.header.target_difficulty >= self.target_difficulty:
-            logger.debug("Chain: BlockHeader has invalid difficulty")
-            return False
-        if not self.is_proper_difficulty(dhash(block.header)):
-            logger.debug("Chain: Block has invalid POW")
-            return False
-
-        # Block should not have been mined more than 2 hours in the future -3
-        difference = get_time_difference_from_now_secs(block.header.timestamp)
-        if difference > consts.BLOCK_MAX_TIME_FUTURE_SECS:
-            logger.debug("Block: Time Stamp not valid")
-            return False
-
-        # Reject if timestamp is the median time of the last 11 blocks or before -5
-        if len(self.header_list) > 11:
-            last_11 = self.header_list[-11:]
-            last_11_timestamp = []
-            for bl in last_11:
-                last_11_timestamp.append(bl.timestamp)
-            med = median(last_11_timestamp)
-            if block.header.timestamp <= med:
-                logger.debug("Chain: Median time past")
-                return False
 
         # Ensure the prev block header matches the previous block hash in the Chain -4
         if len(self.header_list) > 0 and not dhash(self.header_list[-1]) == block.header.prev_block_hash:
@@ -432,76 +374,27 @@ class Chain:
                 logger.debug("Chain: Transaction not valid")
                 return False
 
-        # Validate that the first coinbase Transaction has valid Block reward and fees
-        remaining_transactions = block.transactions[1:]
-        fee_total = 0
-        for tx in remaining_transactions:
-            if not self.is_transaction_valid(tx):
-                logger.debug("Chain: Transaction not valid")
-                return False
-            else:
-                fee_total += tx.fees
-        if not len(block.transactions[0].vout) == 2:
-            logger.debug("Chain: Coinbase vout length != 2")
-            return False
-
-        if not block.transactions[0].vout[1].amount == fee_total:
-            logger.debug("Chain: Coinbase fee invalid")
-            return False
-
-        if not block.transactions[0].vout[0].amount == self.current_block_reward():
-            logger.debug("Chain: Coinbase reward invalid")
-            return False
         return True
 
     def add_block(self, block: Block) -> bool:
         if self.is_block_valid(block):
             self.header_list.append(block.header)
             self.update_utxo(block)
-            self.update_target_difficulty()
             self.length = len(self.header_list)
-            self.total_scoins = self.current_block_reward()
             add_block_to_db(block)
             logger.info("Chain: Added Block " + str(block))
             return True
         return False
 
-    def update_target_difficulty(self):
-        dui = consts.BLOCK_DIFFICULTY_UPDATE_INTERVAL
-        length = len(self.header_list)
-        if length > 0 and length % dui == 0:
-            time_elapsed = self.header_list[-1].timestamp - self.header_list[-dui].timestamp
-            update = (consts.AVERAGE_BLOCK_MINE_INTERVAL * dui) / time_elapsed
-            self.target_difficulty = int(self.target_difficulty * update)
-            if self.target_difficulty < 1:
-                self.target_difficulty = 1
-            logger.debug(f"Chain: Updating Block Difficulty, new difficulty {self.target_difficulty}")
 
-    def is_proper_difficulty(self, bhash: str) -> bool:
-        target_difficulty = int(consts.MAXIMUM_TARGET_DIFFICULTY, 16) / self.target_difficulty
-        return int(bhash, 16) < target_difficulty
-
-    def current_block_reward(self) -> int:
-        """Returns the current block reward
-
-        Returns:
-            int -- The current block reward in scoins
-        """
-        if self.total_scoins < consts.MAX_SCOINS_POSSIBLE:
-            phase = self.length // consts.REWARD_UPDATE_INTERVAL
-            return consts.INITIAL_BLOCK_REWARD / (2 ** phase)
-        return 0
 
 
 class BlockChain:
 
     block_lock = RLock()
-    block_ref_count: Counter = Counter()
 
     def __init__(self):
         self.active_chain: Chain = Chain()
-        self.chains: List[Chain] = []
-        self.chains.append(self.active_chain)
         self.mempool: Set[Transaction] = set()
 
     def remove_transactions_from_mempool(self, block: Block):
@@ -521,22 +414,6 @@ class BlockChain:
         self.mempool = new_mempool
 
     def update_active_chain(self):
-        self.active_chain = max(self.chains, key=attrgetter("length"))
-        max_length = self.active_chain.length
-        # Try removing old chains
-        new_chains = []
-        for chain in self.chains:
-            if chain.length > max_length - consts.FORK_CHAIN_HEIGHT:
-                new_chains.append(chain)
-            else:
-                for hdr in chain.header_list:
-                    if BlockChain.block_ref_count[dhash(hdr)] == 1:
-                        del BlockChain.block_ref_count[dhash(hdr)]
-                        remove_block_from_db(dhash(hdr))
-                    else:
-                        BlockChain.block_ref_count[dhash(hdr)] -= 1
-
-        self.chains = new_chains
         # Save Active Chain to DB
         write_header_list_to_db(self.active_chain.header_list)
 
@@ -554,49 +431,17 @@ class BlockChain:
 
     @lock(block_lock)
     def add_block(self, block: Block):
-        # if check_block_in_db(dhash(block.header)):
-        #     logger.debug("Chain: AddBlock: Block already exists")
-        #     return True
-
         blockAdded = False
 
-        for chain in self.chains:
-            if chain.length == 0 or block.header.prev_block_hash == dhash(chain.header_list[-1]):
-                if chain.add_block(block):
-                    BlockChain.block_ref_count[dhash(block.header)] += 1
-                    self.update_active_chain()
-                    if chain is self.active_chain:
-                        # Remove the transactions from MemPool
-                        self.remove_transactions_from_mempool(block)
-                    blockAdded = True
+        chain = self.active_chain
+        if chain.length == 0 or block.header.prev_block_hash == dhash(chain.header_list[-1]):
+            if chain.add_block(block):
+                self.update_active_chain()
+                self.remove_transactions_from_mempool(block)
+                blockAdded = True
+        
+        return blockAdded
 
-        if blockAdded:
-            return True
-
-        # Check if we need to fork
-        self.chains.sort(key=attrgetter("length"), reverse=True)
-        new_chains = copy.deepcopy(self.chains)
-        for chain in new_chains:
-            hlist = copy.deepcopy(chain.header_list)
-            for h in reversed(hlist):
-                # Check if block can be added for current header
-                if dhash(h) == block.header.prev_block_hash:
-                    newhlist = []
-                    for hh in chain.header_list:
-                        newhlist.append(hh)
-                        if dhash(hh) == block.header.prev_block_hash:
-                            break
-
-                    nchain = Chain.build_from_header_list(newhlist)
-                    if nchain.add_block(block):
-                        for header in nchain.header_list:
-                            BlockChain.block_ref_count[dhash(header)] += 1
-                        if nchain not in self.chains:
-                            self.chains.append(nchain)
-                        self.update_active_chain()
-                        logger.debug(f"There was a soft fork and a new chain was created with length {nchain.length}")
-                        return True
-        return False
 
 
 genesis_block_transaction = [
@@ -604,8 +449,6 @@ genesis_block_transaction = [
         version=1,
         locktime=0,
         timestamp=1535646190,
-        fees=0,
-        is_coinbase=True,
         vin={0: TxIn(payout=None, sig=consts.GENESIS_BLOCK_SIGNATURE, pub_key="")},
         vout={
             0: TxOut(amount=consts.INITIAL_BLOCK_REWARD, address=consts.WALLET_PUBLIC),
@@ -621,13 +464,13 @@ genesis_block_header = BlockHeader(
     height=0,
     merkle_root=merkle_hash(genesis_block_transaction),
     timestamp=1535646190,
-    target_difficulty=consts.INITIAL_BLOCK_DIFFICULTY,
-    nonce=440683,
+    signature=''
 )
 genesis_block = Block(header=genesis_block_header, transactions=genesis_block_transaction)
 
 
 if __name__ == "__main__":
+    print(genesis_block)
     logger.debug(genesis_block)
     gb_json = genesis_block.to_json()
     gb = Block.from_json(gb_json).object()
