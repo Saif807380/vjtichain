@@ -106,7 +106,7 @@ def get_block_header_hash(height):
 
 
 def sync(max_peer):
-    fork_height = BLOCKCHAIN.active_chain.height
+    fork_height = BLOCKCHAIN.active_chain.length
     r = requests.post(get_peer_url(max_peer) + "/getblockhashes", data={"myheight": fork_height})
     hash_list = json.loads(decompress(r.text.encode()))
     # logger.debug("Received the Following HashList from peer " + str(get_peer_url(max_peer)))
