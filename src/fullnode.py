@@ -36,7 +36,7 @@ def mining_thread_task():
     while True:
         if not miner.is_mining():
             miner.start_mining(BLOCKCHAIN.mempool, BLOCKCHAIN.active_chain, MY_WALLET)
-        time.sleep(consts.MINING_INTERVAL_THRESHOLD)
+        time.sleep(consts.MINING_INTERVAL_THRESHOLD // 2)
 
 
 def send_to_all_peers(url, data):
@@ -136,7 +136,7 @@ def sync_with_peers():
             sync(max_peer)
     except Exception as e:
         logger.error("Sync: Error: " + str(e))
-    Timer(consts.AVERAGE_BLOCK_MINE_INTERVAL // 2, sync_with_peers).start()
+    Timer(consts.MINING_INTERVAL_THRESHOLD * 2, sync_with_peers).start()
 
 
 def check_balance():
