@@ -148,6 +148,7 @@ def check_balance():
     return int(current_balance)
 
 
+
 def send_bounty(bounty: int, receiver_public_key: str):
     current_balance = check_balance()
     if current_balance < bounty:
@@ -192,6 +193,75 @@ def create_transaction(tx: Transaction, w: Wallet, bounty: int):
             i += 1
     tx.vout[1].amount = current_amount - bounty
     tx.sign(w)
+
+@app.post("/checkBalance")
+def balance():
+    public_key = request.form['public_key']
+    current_balance = 0
+    for x, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
+        tx_out = utxo_list[0]
+        if tx_out.address == public_key:
+            current_balance += int(tx_out.amount)
+    return int(current_balance)
+
+@app.post("/makeTransaction")
+def make_transaction(bounty: int, receiver_public_key: str, sender_public_key: str):
+    bounty = request.form['bounty']
+    receiver_public_key = request.form['receiver_public_key']
+    sender_public_key = request.form['sender_public_key']
+    current_balance = 0
+
+    for x, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
+        tx_out = utxo_list[0]
+        if tx_out.address == sender_public_key:
+            current_balance += int(tx_out.amount)
+
+    if current_balance < bounty:
+        print("Insuficient balance ")
+        print("Current balance : " + str(current_balance))
+        print("You need " + str(current_balance - bounty) + "more money")
+
+    else:
+        transaction = Transaction(
+            version=1,
+            locktime=0,
+            timestamp=int(time.time()),
+            vin={},
+            vout={0: TxOut(amount=bounty, address=receiver_public_key), 1: TxOut(amount=0, address= sender_public_key)},
+        )
+        #create_transaction(transaction, MY_WALLET, bounty)
+
+        current_amount = 0
+        i = 0
+        for so, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
+            tx_out = utxo_list[0]
+            if current_amount >= bounty:
+                break
+            if tx_out.address == sender_public_key:
+                current_amount += tx_out.amount
+                transaction.vin[i] = TxIn(payout=SingleOutput.from_json(so), pub_key=sender_public_key, sig="")
+                i += 1
+        transaction.vout[1].amount = current_amount - bounty
+
+
+        logger.debug(transaction)
+        logger.info("Wallet: Attempting to Send Transaction")
+        try:
+            requests.post(
+                "http://0.0.0.0:" + str(consts.MINER_SERVER_PORT) + "/newtransaction",
+                data=compress(transaction.to_json()),
+                timeout=(5, 1),
+            )
+        except Exception as e:
+            logger.error("Wallet: Could not Send Transaction. Try Again." + str(e))
+        else:
+            logger.info("Wallet: Transaction Sent, Wait for it to be Mined")
+
+
+@app.post("/transactionHistory")
+def transaction_history():
+    public_key = request.form['public_key']
+    # implementation pending
 
 
 @app.post("/greetpeer")

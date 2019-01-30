@@ -47,12 +47,13 @@ if __name__ == "__main__":
     print(w)
 
     print(w.public_key)
-    print("hololaaa")
+    print("-----------------------------------------------------------")
     print(w.private_key)
 
-    message = "Send 100 btc to Teknas"
+    message = "VJTI"
     sig = w.sign(message)
-    print(type(sig))
+
+    print(sig)
+
     result = w.verify(message, sig, w.public_key)
     print(result)
-    print(sig)

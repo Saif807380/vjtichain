@@ -101,8 +101,6 @@ class Transaction(DataClassJson):
     def sign(self, w=None):
         sign_copy_of_tx = copy.deepcopy(self)
         sign_copy_of_tx.vin = {}
-        if w is None:
-            w = Wallet([consts.WALLET_PRIVATE, consts.WALLET_PUBLIC])
         sig = w.sign(sign_copy_of_tx.to_json())
         for i in self.vin:
             self.vin[i].sig = sig
