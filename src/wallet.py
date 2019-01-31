@@ -43,17 +43,19 @@ class Wallet:
 
 
 if __name__ == "__main__":
-    w = Wallet()
-    print(w)
+    # w = Wallet()
+    # print(w)
 
-    print(w.public_key)
-    print("-----------------------------------------------------------")
-    print(w.private_key)
+    # print(w.public_key)
+    # print("-----------------------------------------------------------")
+    # print(w.private_key)
+
+    # message = "VJTI"
+    # sig = w.sign(message)
+    # print(sig)
 
     message = "VJTI"
-    sig = w.sign(message)
-
-    print(sig)
-
-    result = w.verify(message, sig, w.public_key)
+    sig = "[103111931770357557787240734032500409747768950342460504054022562903234888485282, 62313255658714096047201933381966546950499103144044102665752914019719500684319]"
+    pubKey = "MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEGuo+7hHGzRcdR5wQOEHEBiTpxL7lXl9psCD12vhcWagZ0QvaCrOObwSfFv85NWv/pnyAVuzYfZeDlnH4X/JPGQ=="
+    result = Wallet.verify(message, sig, pubKey)
     print(result)

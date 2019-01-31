@@ -29,25 +29,11 @@ public class wallet {
         privateKeyPEM = privateKeyPEM.replace("-----BEGIN PRIVATE KEY-----\n", "");
         privateKeyPEM = privateKeyPEM.replace("-----END PRIVATE KEY-----", "");
         privateKeyPEM = privateKeyPEM.replace("\n", "");
-        System.out.println(privateKeyPEM);
         byte[] encoded = Base64.getDecoder().decode(privateKeyPEM);
         KeyFactory kf = KeyFactory.getInstance("EC");
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
         PrivateKey privKey = (PrivateKey) kf.generatePrivate(keySpec);
         return privKey;
-    }
-
-    public static PublicKey getPrivateKeyFromString2(String key) throws IOException, GeneralSecurityException {
-        String privateKeyPEM = key;
-        privateKeyPEM = privateKeyPEM.replace("-----BEGIN PRIVATE KEY-----\n", "");
-        privateKeyPEM = privateKeyPEM.replace("-----END PRIVATE KEY-----", "");
-        privateKeyPEM = privateKeyPEM.replace("\n", "");
-        System.out.println(privateKeyPEM);
-        byte[] encoded = Base64.getDecoder().decode(privateKeyPEM);
-        KeyFactory kf = KeyFactory.getInstance("EC");
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
-        PublicKey pubKey = (PublicKey) kf.generatePublic(keySpec);
-        return pubKey;
     }
 
     public static PublicKey getPublicKey(String filename) throws IOException, GeneralSecurityException {
@@ -97,60 +83,50 @@ public class wallet {
         return der;
     }
 
+    public static String getSignatureString(byte[] sign) throws Exception {
+        // System.out.println("Signature: " + new BigInteger(1, sign).toString(16));
+
+        BigInteger r = extractR(sign);
+        BigInteger s = extractS(sign);
+
+        // System.out.println(r);
+        // System.out.println(s);
+        String realSign = "[" + r.toString() + ", " + s.toString() + "]";
+        return realSign;
+    }
+
     public static void main(String[] args) throws Exception {
-        /*
-         * Generate an ECDSA signature
-         */
 
-        /*
-         * Generate a key pair
-         */
+        // Generate a Key Pair
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
+        ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1");
+        SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+        keyGen.initialize(ecSpec, random);
+        KeyPair pair = keyGen.generateKeyPair();
+        PrivateKey priv = pair.getPrivate();
+        PublicKey pub = pair.getPublic();
 
-        // KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
-        // SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+        // Storing the Pub/Priv Key as String
+        String pubStr = new String(Base64.getEncoder().encode(pub.getEncoded()));
+        String privStr = new String(Base64.getEncoder().encode(priv.getEncoded()));
 
-        // keyGen.initialize(256, random);
+        // Restoring Pub/Priv Keys from String
+        PrivateKey restoredPriv = getPrivateKeyFromString(privStr);
+        PublicKey restoredPub = getPublicKeyFromString(pubStr);
 
-        // KeyPair pair = keyGen.generateKeyPair();
-        // PrivateKey priv = pair.getPrivate();
-        // PublicKey pub = pair.getPublic();
-        PrivateKey p = getPrivateKey("wallet/test");
-        // PublicKey p2 = getPrivateKeyFromString2(getKey("wallet/test"));
-        /*
-         * Create a Signature object and initialize it with the private key
-         */
-
+        // Signing a String
         Signature dsa = Signature.getInstance("SHA256withECDSA");
-        dsa.initSign(p);
-
-        String str = "VJTI";
-        byte[] strByte = str.getBytes("UTF-8");
+        dsa.initSign(priv); // Pass the private Key that we need. 
+        String str = "VJTI"; // The string that needs to be signed.
+        byte[] strByte = str.getBytes("UTF-8"); 
         dsa.update(strByte);
-
-        /*
-         * Now that all the data to be signed has been read in, generate a
-         * signature for it
-         */
-
-        byte[] realSig = dsa.sign();
-        System.out.println(realSig.length);
-        System.out.println("Signature: " + new BigInteger(1, realSig).toString(16));
-        System.out.println(dsa.toString());
-        System.out.println(realSig.length);
-
-        BigInteger r = extractR(realSig);
-        BigInteger s = extractS(realSig);
-
-        System.out.println(r);
-        System.out.println(s);
-
-        // //Python
-        // Signature DSA = Signature.getInstance("SHA256withECDSA");
-        // DSA.initVerify(p2);
-
-        // String str2 = "VJTI";
-        // byte[] strByte2 = str2.getBytes("UTF-8");
-        // dsa.update(strByte2);
-        // System.out.println(DSA.verify(derSign(r, s)));
+        byte[] sign = dsa.sign(); // Actual Signing of the String 'str' with PrivateKey 'priv'.
+        
+        // Sending the signature
+        String realSig = getSignatureString(sign);
+        System.out.println(realSig); 
+        System.out.println(str);
+        System.out.println(pubStr);
+        // Send this signature along with the String that you signed and your pubKey i.e. [realSig, str, pubStr]
     }
 }
