@@ -17,7 +17,6 @@ from wallet import Wallet
 from authority_rules import authority_rules
 
 
-
 @dataclass
 class SingleOutput(DataClassJson):
     """ References a single output """
@@ -102,6 +101,10 @@ class Transaction(DataClassJson):
         sign_copy_of_tx = copy.deepcopy(self)
         sign_copy_of_tx.vin = {}
         sig = w.sign(sign_copy_of_tx.to_json())
+        for i in self.vin:
+            self.vin[i].sig = sig
+
+    def add_sign(self, sig):
         for i in self.vin:
             self.vin[i].sig = sig
 
@@ -366,7 +369,7 @@ class Chain:
             if not self.is_transaction_valid(tx):
                 logger.debug("Chain: Transaction not valid")
                 return False
-        
+
         # Validate Authority Signature
         timestamp = block.header.timestamp
         turn = int(timestamp / authority_rules["interval"]) % len(authority_rules["authorities"])
@@ -374,7 +377,7 @@ class Chain:
             if authority["order"] == turn:
                 blk_hdr = copy.deepcopy(block.header)
                 blk_hdr.signature = ""
-                if not Wallet.verify(dhash(blk_hdr), block.header.signature, authority['pubkey']):
+                if not Wallet.verify(dhash(blk_hdr), block.header.signature, authority["pubkey"]):
                     return False
         return True
 
@@ -451,9 +454,18 @@ genesis_block_transaction = [
         vin={0: TxIn(payout=None, sig=consts.GENESIS_BLOCK_SIGNATURE, pub_key="")},
         vout={
             0: TxOut(amount=consts.INITIAL_BLOCK_REWARD, address=consts.WALLET_PUBLIC),
-            1: TxOut(amount=100000, address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE76RJY7pgn55Q6/HtBqPPb9yuOfBf0Bz+FdDEcRDDbAQYgLNMWI7PjDraMleICkBFyVN3sllFTu0lsmE0K/CufQ=="),
-            2: TxOut(amount=100000, address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAExcIsvLH3vegArqtP7wEdyly11xAcrpV4IBIUCVM+HXoPMMpNFX8hYDjOPL4IUT4swqDkrhj1gS+XWukiGpttzQ=="),
-            3: TxOut(amount=100000, address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEMKkj/B4LqqUWT6FEbZRoSLvGbfC93yD7Zit+GWmaY/UXUiL0LOwIPljBZ/16sFMwxgCO+nlYGFqcTmftaHKmgA=="),
+            1: TxOut(
+                amount=100000,
+                address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE76RJY7pgn55Q6/HtBqPPb9yuOfBf0Bz+FdDEcRDDbAQYgLNMWI7PjDraMleICkBFyVN3sllFTu0lsmE0K/CufQ==",
+            ),
+            2: TxOut(
+                amount=100000,
+                address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAExcIsvLH3vegArqtP7wEdyly11xAcrpV4IBIUCVM+HXoPMMpNFX8hYDjOPL4IUT4swqDkrhj1gS+XWukiGpttzQ==",
+            ),
+            3: TxOut(
+                amount=100000,
+                address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEMKkj/B4LqqUWT6FEbZRoSLvGbfC93yD7Zit+GWmaY/UXUiL0LOwIPljBZ/16sFMwxgCO+nlYGFqcTmftaHKmgA==",
+            ),
         },
     )
 ]

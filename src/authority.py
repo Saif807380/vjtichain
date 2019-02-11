@@ -55,7 +55,7 @@ class Authority:
             self.p.terminate()
             self.p = None
 
-    def __calculate_transactions(self, transactions: List[Transaction]) -> int:
+    def __calculate_transactions(self, transactions: List[Transaction]) -> List[Transaction]:
         i = 0
         size = 0
         mlist = []

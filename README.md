@@ -36,5 +36,5 @@ conda env create -f=./environment.yml
 ```
 cd src/
 source activate pychain
-python fullnode.py
+python fullnode.py -n
 ```

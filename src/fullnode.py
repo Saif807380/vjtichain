@@ -148,7 +148,6 @@ def check_balance():
     return int(current_balance)
 
 
-
 def send_bounty(bounty: int, receiver_public_key: str):
     current_balance = check_balance()
     if current_balance < bounty:
@@ -194,21 +193,24 @@ def create_transaction(tx: Transaction, w: Wallet, bounty: int):
     tx.vout[1].amount = current_amount - bounty
     tx.sign(w)
 
+
 @app.post("/checkBalance")
 def balance():
-    public_key = request.form['public_key']
+    public_key = request.forms.get("public_key")
     current_balance = 0
     for x, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
         tx_out = utxo_list[0]
         if tx_out.address == public_key:
             current_balance += int(tx_out.amount)
-    return int(current_balance)
+    logger.debug("PublicKey: " + str(public_key) + " Balance: " + str(current_balance))
+    return str(current_balance)
+
 
 @app.post("/makeTransaction")
-def make_transaction(bounty: int, receiver_public_key: str, sender_public_key: str):
-    bounty = request.form['bounty']
-    receiver_public_key = request.form['receiver_public_key']
-    sender_public_key = request.form['sender_public_key']
+def make_transaction():
+    bounty = int(request.forms.get("bounty"))
+    receiver_public_key = request.forms.get("receiver_public_key")
+    sender_public_key = request.forms.get("sender_public_key")
     current_balance = 0
 
     for x, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
@@ -217,19 +219,17 @@ def make_transaction(bounty: int, receiver_public_key: str, sender_public_key: s
             current_balance += int(tx_out.amount)
 
     if current_balance < bounty:
-        print("Insuficient balance ")
-        print("Current balance : " + str(current_balance))
-        print("You need " + str(current_balance - bounty) + "more money")
-
+        logger.debug("Insufficient Balance to make Transaction")
+        return "False " + str(current_balance - bounty)
     else:
         transaction = Transaction(
             version=1,
             locktime=0,
             timestamp=int(time.time()),
             vin={},
-            vout={0: TxOut(amount=bounty, address=receiver_public_key), 1: TxOut(amount=0, address= sender_public_key)},
+            vout={0: TxOut(amount=bounty, address=receiver_public_key), 1: TxOut(amount=0, address=sender_public_key)},
         )
-        #create_transaction(transaction, MY_WALLET, bounty)
+        # create_transaction(transaction, MY_WALLET, bounty)
 
         current_amount = 0
         i = 0
@@ -243,25 +243,42 @@ def make_transaction(bounty: int, receiver_public_key: str, sender_public_key: s
                 i += 1
         transaction.vout[1].amount = current_amount - bounty
 
-
         logger.debug(transaction)
-        logger.info("Wallet: Attempting to Send Transaction")
-        try:
-            requests.post(
-                "http://0.0.0.0:" + str(consts.MINER_SERVER_PORT) + "/newtransaction",
-                data=compress(transaction.to_json()),
-                timeout=(5, 1),
-            )
-        except Exception as e:
-            logger.error("Wallet: Could not Send Transaction. Try Again." + str(e))
-        else:
-            logger.info("Wallet: Transaction Sent, Wait for it to be Mined")
+
+        data = {}
+        data["send_this"] = transaction.to_json()
+        transaction.vin = {}
+        data["sign_this"] = transaction.to_json()
+        return json.dumps(data)
+
+
+@app.post("/sendTransaction")
+def send_transaction():
+    transaction = Transaction.from_json(request.forms.get("transaction"))
+    sig = request.forms.get("signature")
+    transaction.add_sign(sig)
+
+    logger.debug(transaction)
+    logger.info("Wallet: Attempting to Send Transaction")
+    try:
+        requests.post(
+            "http://0.0.0.0:" + str(consts.MINER_SERVER_PORT) + "/newtransaction",
+            data=compress(transaction.to_json()),
+            timeout=(5, 1),
+        )
+    except Exception as e:
+        logger.error("Wallet: Could not Send Transaction. Try Again." + str(e))
+        return "Try Again"
+    else:
+        logger.info("Wallet: Transaction Sent, Wait for it to be Mined")
+    return "Done"
 
 
 @app.post("/transactionHistory")
 def transaction_history():
-    public_key = request.form['public_key']
+    public_key = request.forms.get("public_key")
     # implementation pending
+    return "Incomplete"
 
 
 @app.post("/greetpeer")
@@ -482,14 +499,14 @@ def render_block_header(hdr):
 
     # get block
     block = Block.from_json(get_block_from_db(dhash(hdr))).object()
-    
+
     html += "<tr><th>" + "Transactions" + "</th>"
     html += "<td>" + str(len(block.transactions)) + "</td></tr>"
 
     # for i, transaction in enumerate(block.transactions):
     #     s = "coinbase: " + str(transaction.is_coinbase) + ", fees: " + str(transaction.fees)
     #     html += "<tr><th>Transaction " + str(i) + "</th><td>" + str(s) + "</td></tr>"
-    
+
     html += "</table>"
     return str(html)
 
