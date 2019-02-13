@@ -12,10 +12,10 @@ from bottle import BaseTemplate, Bottle, request, response, static_file, templat
 
 import utils.constants as consts
 from core import Block, BlockChain, SingleOutput, Transaction, TxIn, TxOut, genesis_block
-from authority import Authority, authority_rules
+from authority import Authority
 from utils.logger import logger
 from utils.storage import get_block_from_db, get_wallet_from_db, read_header_list_from_db
-from utils.utils import compress, decompress, dhash, get_time_difference_from_now_secs
+from utils.utils import compress, decompress, dhash
 from wallet import Wallet
 
 app = Bottle()
@@ -254,7 +254,7 @@ def make_transaction():
 
 @app.post("/sendTransaction")
 def send_transaction():
-    transaction = Transaction.from_json(request.forms.get("transaction"))
+    transaction = Transaction.from_json(request.forms.get("transaction")).object()
     sig = request.forms.get("signature")
     transaction.add_sign(sig)
 

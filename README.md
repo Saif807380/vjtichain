@@ -1,5 +1,5 @@
-# somechain
-A (somewhat) complete implementation of the bitcoin core in python 3.7+
+# VJTI Chain
+A complete implementation of a Proof of Authority (POA) Blockchain in python 3.7+
 
 ## Simplifications
 - Storage using pickledb in flat files
@@ -9,7 +9,7 @@ A (somewhat) complete implementation of the bitcoin core in python 3.7+
 - No scripting language
 - All nodes assumed to be honest and non malicious
 - Peer discovery through a central server
-- Every node is a full node with a wallet, no light nodes (for now)
+- Every node is a full node with a wallet, light nodes would be implemented as Android Apps.
 
 ## Installing and running
 Use conda to create an env using the environment.yml file and run src/fullnode.py
@@ -36,5 +36,7 @@ conda env create -f=./environment.yml
 ```
 cd src/
 source activate pychain
-python fullnode.py -n
+python dns_seed.py # Run the central dns server for peer discovery
+python fullnode.py -p 9000 -n -q # Run the full node on port(-p) 9000, (-n) new blockchain from genesis i.e. no restore and in quiet mode(-q)
+# To terminate press ctrl+C twice.
 ```

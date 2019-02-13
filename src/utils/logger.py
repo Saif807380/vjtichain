@@ -9,6 +9,8 @@ for name in ['werkzeug', 'bottle', 'waitress']:
     log.disabled = True
 
 logger = logging.getLogger("somechain")
+logger.propagate = False
+
 formatter = logging.Formatter("%(asctime)s %(levelname)-10s %(message)s", consts.DATE_FORMAT)
 logger.setLevel(logging.DEBUG)
 

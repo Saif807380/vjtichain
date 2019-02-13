@@ -86,7 +86,7 @@
             var client = new HttpClient();
             client.get('/checkbalance', function (response) {
                 // do something with response
-                //console.log(response);
+                // console.log(response);
                 document.getElementById("bal").textContent = response;
             });
         }
