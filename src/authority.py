@@ -16,7 +16,6 @@ from wallet import Wallet
 from authority_rules import authority_rules
 
 
-
 def is_my_turn(wallet):
     timestamp = int(time.time())
     turn = int(timestamp / authority_rules["interval"]) % len(authority_rules["authorities"])
@@ -42,12 +41,12 @@ class Authority:
         if not self.is_mining():
             if is_my_turn(wallet):
                 if len(mempool) > consts.MINING_TRANSACTION_THRESHOLD or (
-                    len(mempool) > 0 and
-                    abs(get_time_difference_from_now_secs(chain.header_list[-1].timestamp)) > consts.MINING_INTERVAL_THRESHOLD
+                    len(mempool) > 0
+                    and abs(get_time_difference_from_now_secs(chain.header_list[-1].timestamp)) > consts.MINING_INTERVAL_THRESHOLD
                 ):
                     self.p = Process(target=self.__mine, args=(mempool, chain, wallet))
                     self.p.start()
-                    # logger.debug("Miner: Started mining")
+                    logger.debug("Miner: Started mining")
 
     def stop_mining(self):
         if self.is_mining():

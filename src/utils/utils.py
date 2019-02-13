@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import json
 import zlib as zl
 from base64 import b85decode, b85encode
 from functools import wraps
@@ -79,3 +80,12 @@ def compress(payload: str) -> bytes:
 
 def decompress(payload: bytes) -> str:
     return zl.decompress(b85decode(payload)).decode()
+
+
+def generate_tx_hist(amount, address, timestamp, dhash):
+    data = {}
+    data["amount"] = amount
+    data["address"] = address
+    data["timestamp"] = timestamp
+    data["hash"] = dhash
+    return json.dumps(data)

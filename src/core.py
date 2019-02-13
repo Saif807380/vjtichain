@@ -12,9 +12,10 @@ import utils.constants as consts
 from utils.dataclass_json import DataClassJson
 from utils.logger import logger
 from utils.storage import add_block_to_db, check_block_in_db, get_block_from_db, remove_block_from_db, write_header_list_to_db
-from utils.utils import dhash, get_time_difference_from_now_secs, lock, merkle_hash
+from utils.utils import dhash, get_time_difference_from_now_secs, lock, merkle_hash, generate_tx_hist
 from wallet import Wallet
 from authority_rules import authority_rules
+from collections import deque
 
 
 @dataclass
@@ -107,6 +108,24 @@ class Transaction(DataClassJson):
     def add_sign(self, sig):
         for i in self.vin:
             self.vin[i].sig = sig
+
+    def summarize(self):
+        # Summarize the transaction and give sender address, receiver addresses and amount.
+        pub_key = "SomePublicKey"
+        receiver = {}
+        for i in self.vin:
+            pub_key = self.vin[i].pub_key
+
+        for i in self.vout:
+            amt = self.vout[i].amount
+            address = self.vout[i].address
+            if address == pub_key:
+                continue
+            if address not in receiver:
+                receiver[address] = 0
+
+            receiver[address] += amt
+        return pub_key, receiver
 
     def is_valid(self):
 
@@ -264,6 +283,22 @@ class Utxo:
 
 
 @dataclass
+class TxHistory:
+    tx_hist: Dict = field(default_factory=dict)
+
+    def append(self, pub_key: str, tx: str) -> None:
+        if pub_key not in self.tx_hist:
+            self.tx_hist[pub_key] = deque(maxlen=consts.MAX_TRANSACTION_HISTORY_TO_KEEP)
+        self.tx_hist[pub_key].append(tx)
+        return
+
+    def get(self, pub_key: str) -> List[str]:
+        if pub_key in self.tx_hist:
+            return list(self.tx_hist[pub_key])
+        return []
+
+
+@dataclass
 class Chain:
     # The max length of the blockchain
     length: int = 0
@@ -273,6 +308,9 @@ class Chain:
 
     # The UTXO Set
     utxo: Utxo = field(default_factory=Utxo)
+
+    # Transaction History
+    transaction_history: TxHistory = field(default_factory=TxHistory)
 
     def __eq__(self, other):
         for i, h in enumerate(self.header_list):
@@ -387,6 +425,19 @@ class Chain:
             self.update_utxo(block)
             self.length = len(self.header_list)
             add_block_to_db(block)
+            for tx in block.transactions:
+                pub_key, data = tx.summarize()
+                for address in data:
+                    amount = data[address]
+                    timestamp = tx.timestamp
+                    bhash = dhash(block.header)
+                    
+                    history = generate_tx_hist(amount, address, timestamp, bhash)
+                    self.transaction_history.append(address, history)
+
+                    history = generate_tx_hist(-amount, address, timestamp, bhash)
+                    self.transaction_history.append(pub_key, history)
+
             logger.info("Chain: Added Block " + str(block))
             return True
         return False

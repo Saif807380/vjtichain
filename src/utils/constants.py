@@ -41,6 +41,9 @@ MAXIMUM_TARGET_DIFFICULTY = "0000fffffffffffffffffffffffffffffffffffffffffffffff
 # Cheat Code
 BLOCK_MINING_SPEEDUP = 20
 
+# Max History
+MAX_TRANSACTION_HISTORY_TO_KEEP = 10
+
 # Define Values from arguments passed
 parser = argparse.ArgumentParser()
 

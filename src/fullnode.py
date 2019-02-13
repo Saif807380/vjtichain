@@ -277,8 +277,8 @@ def send_transaction():
 @app.post("/transactionHistory")
 def transaction_history():
     public_key = request.forms.get("public_key")
-    # implementation pending
-    return "Incomplete"
+    tx_hist = BLOCKCHAIN.active_chain.transaction_history.get(public_key)
+    return json.dumps(tx_hist)
 
 
 @app.post("/greetpeer")
