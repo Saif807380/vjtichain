@@ -8,7 +8,7 @@ from .utils import dhash
 from .encode_keys import encode_public_key
 
 from fastecdsa.keys import export_key, import_key
-from fastecdsa.curve import secp256k1
+from fastecdsa.curve import secp256k1, P256
 
 from json import loads, dumps
 
@@ -41,7 +41,7 @@ def get_wallet_from_db(port: str) -> str:
 
 def add_wallet_to_db(port: str, wallet: "Wallet"):
     location = WALLET_DB_LOC + str(port)
-    export_key(wallet.private_key, curve=secp256k1, filepath=location + ".key")
+    export_key(wallet.private_key, curve=P256, filepath=location + ".key")
     with open(location + ".pub", "w") as file:
         file.write(wallet.public_key)
 

@@ -507,15 +507,15 @@ genesis_block_transaction = [
             0: TxOut(amount=consts.INITIAL_BLOCK_REWARD, address=consts.WALLET_PUBLIC),
             1: TxOut(
                 amount=100000,
-                address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE76RJY7pgn55Q6/HtBqPPb9yuOfBf0Bz+FdDEcRDDbAQYgLNMWI7PjDraMleICkBFyVN3sllFTu0lsmE0K/CufQ==",
+                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg==",
             ),
             2: TxOut(
                 amount=100000,
-                address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAExcIsvLH3vegArqtP7wEdyly11xAcrpV4IBIUCVM+HXoPMMpNFX8hYDjOPL4IUT4swqDkrhj1gS+XWukiGpttzQ==",
+                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE+nU1YCwX6JgQRPhMC4WCxyit86SeEtxyXz/o6zO5Qx/jgGQBLBDysDKnQ4x2ViIWcUyTciQIpu76OPN2qR8dMg==",
             ),
             3: TxOut(
                 amount=100000,
-                address="MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEMKkj/B4LqqUWT6FEbZRoSLvGbfC93yD7Zit+GWmaY/UXUiL0LOwIPljBZ/16sFMwxgCO+nlYGFqcTmftaHKmgA==",
+                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKWOBAv4bhwG4FOvfLCX/loeK2FSw77PRpiR4alqqE8Dpm7vVZS2ixyNF1t8g0FVNxpoCUPjvMu7rIhoDkhnrPg==",
             ),
         },
     )

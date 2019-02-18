@@ -28,23 +28,23 @@ class Wallet:
         return f"PubKey:\t{self.public_key}\nPrivKey:\t{self.private_key}"
 
     def generate_address(self):
-        priv_key, pub_key_point = keys.gen_keypair(curve.secp256k1)
+        priv_key, pub_key_point = keys.gen_keypair(curve.P256)
         return priv_key, encode_public_key(pub_key_point)
 
     def sign(self, transaction: str) -> str:
-        r, s = ecdsa.sign(transaction, self.private_key, curve=curve.secp256k1)
+        r, s = ecdsa.sign(transaction, self.private_key, curve=curve.P256)
         return json.dumps((r, s))
 
     @staticmethod
     def verify(transaction: str, signature: str, public_key: str) -> bool:
         r, s = json.loads(signature)
         public_key = decode_public_key(public_key)
-        return ecdsa.verify((r, s), transaction, public_key, curve=curve.secp256k1)
+        return ecdsa.verify((r, s), transaction, public_key, curve=curve.P256)
 
 
 if __name__ == "__main__":
-    # w = Wallet()
-    # print(w)
+    w = Wallet()
+    print(w)
 
     # print(w.public_key)
     # print("-----------------------------------------------------------")
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # print(sig)
 
     message = "VJTI"
-    sig = "[103111931770357557787240734032500409747768950342460504054022562903234888485282, 62313255658714096047201933381966546950499103144044102665752914019719500684319]"
-    pubKey = "MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEGuo+7hHGzRcdR5wQOEHEBiTpxL7lXl9psCD12vhcWagZ0QvaCrOObwSfFv85NWv/pnyAVuzYfZeDlnH4X/JPGQ=="
+    sig = "[89577411930164173462307433514969836725411494465308869182568430542388619107505, 485183603865849592066733357268024106189235193197266488152700409427460402051]"
+    pubKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEyDSDFUjXKp/s+37wjME5thvgCnMJ3XcOnjXxJ6K4IdrF5x7MIbF+nkbZYLMKk1TUK/ZIX1b3F6F320q5EHLUmw=="
     result = Wallet.verify(message, sig, pubKey)
     print(result)

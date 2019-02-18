@@ -99,7 +99,7 @@ public class wallet {
 
         // Generate a Key Pair
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
-        ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1");
+        ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256r1");
         SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
         keyGen.initialize(ecSpec, random);
         KeyPair pair = keyGen.generateKeyPair();

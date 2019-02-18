@@ -3,12 +3,12 @@
         {
             "name": "Node 0",
             "order": 0,
-            "pubkey": "MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE76RJY7pgn55Q6/HtBqPPb9yuOfBf0Bz+FdDEcRDDbAQYgLNMWI7PjDraMleICkBFyVN3sllFTu0lsmE0K/CufQ=="
+            "pubkey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg=="
         },
         {
             "name": "Node 1",
             "order": 1,
-            "pubkey": "MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE76RJY7pgn55Q6/HtBqPPb9yuOfBf0Bz+FdDEcRDDbAQYgLNMWI7PjDraMleICkBFyVN3sllFTu0lsmE0K/CufQ=="            
+            "pubkey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg=="            
         }
     ],
     "interval": 3600
