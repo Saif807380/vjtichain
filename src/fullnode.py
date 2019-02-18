@@ -197,6 +197,8 @@ def create_transaction(tx: Transaction, w: Wallet, bounty: int):
 @app.post("/checkBalance")
 def balance():
     public_key = request.forms.get("public_key")
+    public_key = public_key.replace(" ", "+")
+
     current_balance = 0
     for x, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
         tx_out = utxo_list[0]
@@ -209,8 +211,13 @@ def balance():
 @app.post("/makeTransaction")
 def make_transaction():
     bounty = int(request.forms.get("bounty"))
+
     receiver_public_key = request.forms.get("receiver_public_key")
+    receiver_public_key = receiver_public_key.replace(" ", "+")
+
     sender_public_key = request.forms.get("sender_public_key")
+    sender_public_key = sender_public_key.replace(" ", "+")
+
     current_balance = 0
 
     for x, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
@@ -277,6 +284,8 @@ def send_transaction():
 @app.post("/transactionHistory")
 def transaction_history():
     public_key = request.forms.get("public_key")
+    public_key = public_key.replace(" ", "+")
+
     tx_hist = BLOCKCHAIN.active_chain.transaction_history.get(public_key)
     return json.dumps(tx_hist)
 
