@@ -151,9 +151,9 @@ def check_balance():
 def send_bounty(bounty: int, receiver_public_key: str):
     current_balance = check_balance()
     if current_balance < bounty:
-        print("Insuficient balance ")
-        print("Current balance : " + str(current_balance))
-        print("You need " + str(current_balance - bounty) + "more money")
+        logger.debug("Insuficient balance ")
+        logger.debug("Current balance : " + str(current_balance))
+        logger.debug("You need " + str(current_balance - bounty) + "more money")
 
     else:
         transaction = Transaction(
@@ -393,7 +393,6 @@ def process_new_block(request_data: bytes) -> str:
 
 @app.post("/newblock")
 def received_new_block():
-    print(request)
     return process_new_block(request.body.read())
 
 
@@ -454,7 +453,6 @@ def post_send():
             message = "You have insufficient balance !!!"
         return template("send.html", message=message)
     except Exception as e:
-        print(e)
         message = "The value must be numeric"
         return template("send.html", message=message)
 

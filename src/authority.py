@@ -1,5 +1,6 @@
 import copy
 import time
+from datetime import datetime
 import json
 from multiprocessing import Process
 from sys import getsizeof
@@ -17,11 +18,12 @@ from authority_rules import authority_rules
 
 
 def is_my_turn(wallet):
-    timestamp = int(time.time())
-    turn = int(timestamp / authority_rules["interval"]) % len(authority_rules["authorities"])
+    timestamp = datetime.now()
+    seconds_since_midnight = (timestamp - timestamp.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
     for authority in authority_rules["authorities"]:
-        if authority["order"] == turn and wallet.public_key == authority["pubkey"]:
-            return True
+        if seconds_since_midnight <= authority["to"] and seconds_since_midnight >= authority["from"]:
+            if wallet.public_key == authority["pubkey"]:
+                return True
     return False
 
 

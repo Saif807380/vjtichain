@@ -1,5 +1,6 @@
 import copy
 import json
+from datetime import datetime
 from collections import Counter
 from dataclasses import dataclass, field
 from operator import attrgetter
@@ -384,8 +385,6 @@ class Chain:
 
         # ensure sum of amounts of all inputs is > sum of amounts of all outputs
         if not sum_of_all_inputs == sum_of_all_outputs:
-            logger.debug(str(sum_of_all_inputs))
-            logger.debug(str(sum_of_all_outputs))
             logger.debug("Chain: input sum less than output sum")
             return False
 
@@ -409,15 +408,15 @@ class Chain:
                 return False
 
         # Validate Authority Signature
-        timestamp = block.header.timestamp
-        turn = int(timestamp / authority_rules["interval"]) % len(authority_rules["authorities"])
+        timestamp = datetime.fromtimestamp(block.header.timestamp)
+        seconds_since_midnight = (timestamp - timestamp.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
         for authority in authority_rules["authorities"]:
-            if authority["order"] == turn:
+            if seconds_since_midnight <= authority["to"] and seconds_since_midnight >= authority["from"]:
                 blk_hdr = copy.deepcopy(block.header)
                 blk_hdr.signature = ""
-                if not Wallet.verify(dhash(blk_hdr), block.header.signature, authority["pubkey"]):
-                    return False
-        return True
+                if Wallet.verify(dhash(blk_hdr), block.header.signature, authority["pubkey"]):
+                    return True
+        return False
 
     def add_block(self, block: Block, is_genesis: bool) -> bool:
         if is_genesis or self.is_block_valid(block):
@@ -527,7 +526,7 @@ genesis_block_header = BlockHeader(
     prev_block_hash=None,
     height=0,
     merkle_root=merkle_hash(genesis_block_transaction),
-    timestamp=1535646190,
+    timestamp=1550577352,
     signature="",
 )
 genesis_block = Block(header=genesis_block_header, transactions=genesis_block_transaction)
