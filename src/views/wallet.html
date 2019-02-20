@@ -1,0 +1,62 @@
+% include('header.html', title="wallet")
+
+<div class="container">
+    <h4 class="text-right" onclick="update_balance();">Balance: 
+        <span id="bal">0</span>
+        <span>
+            <img class="img-fluid" alt="vjcoins" style="height: 30px" src="{{ get_url('static', filename='img/vjcoin.png') }}">
+        </span>
+    </h4>
+
+% if message!= "":
+    <div class="alert alert-{{ message_type }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+% end
+    <h1 class="text-center">Send Coins</h1>
+    <br>
+    <form action="" method="POST">
+        <div class="form-group">
+            <label for="port">
+                <h3>Public Key or Port: </h3>
+            </label>
+            <input type="text" class="form-control form-control-lg" id="port" placeholder="Enter PublicKey or Port of Receiver" name="port" autofocus>
+        </div>
+        <div class="form-group">
+            <label for="amount">
+                <h3>Amount:</h3>
+            </label>
+            <input type="number" min="1" step="1" data-bind="value:amount" class="form-control form-control-lg" id="amount" placeholder="Enter Amount (VJcoins)" name="amount">
+        </div>
+        <button type="submit" class="btn btn-success">
+            <h4> Send </h4>
+        </button>
+    </form>
+</div>
+
+<script>
+    var HttpClient = function () {
+        this.get = function (aUrl, aCallback) {
+            var anHttpRequest = new XMLHttpRequest();
+            anHttpRequest.onreadystatechange = function () {
+                if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200)
+                    aCallback(anHttpRequest.responseText);
+            }
+            anHttpRequest.open("GET", aUrl, true);
+            anHttpRequest.send(null);
+        }
+    }
+    function update_balance() {
+        var client = new HttpClient();
+        client.get('/checkmybalance', function (response) {
+            document.getElementById("bal").textContent = response;
+        });
+    }
+    window.onload = update_balance;
+    window.setInterval(update_balance, 5000);
+</script>
+
+% include('footer.html')

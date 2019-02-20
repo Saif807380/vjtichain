@@ -139,17 +139,17 @@ def sync_with_peers():
     Timer(consts.MINING_INTERVAL_THRESHOLD * 2, sync_with_peers).start()
 
 
-def check_balance():
+def check_balance(pub_key: str) -> int:
     current_balance = 0
     for x, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
         tx_out = utxo_list[0]
-        if tx_out.address == MY_WALLET.public_key:
+        if tx_out.address == pub_key:
             current_balance += int(tx_out.amount)
     return int(current_balance)
 
 
 def send_bounty(bounty: int, receiver_public_key: str):
-    current_balance = check_balance()
+    current_balance = check_balance(MY_WALLET.public_key)
     if current_balance < bounty:
         logger.debug("Insuficient balance ")
         logger.debug("Current balance : " + str(current_balance))
@@ -200,11 +200,7 @@ def balance():
     logger.debug(data)
     public_key = data["public_key"]
 
-    current_balance = 0
-    for x, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
-        tx_out = utxo_list[0]
-        if tx_out.address == public_key:
-            current_balance += int(tx_out.amount)
+    current_balance = check_balance(public_key)
     logger.debug("PublicKey: " + str(public_key) + " Balance: " + str(current_balance))
     return str(current_balance)
 
@@ -218,12 +214,7 @@ def make_transaction():
     receiver_public_key = data["receiver_public_key"]
     sender_public_key = data["sender_public_key"]
 
-    current_balance = 0
-
-    for x, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
-        tx_out = utxo_list[0]
-        if tx_out.address == sender_public_key:
-            current_balance += int(tx_out.amount)
+    current_balance = check_balance(sender_public_key)
 
     if current_balance < bounty:
         logger.debug("Insufficient Balance to make Transaction")
@@ -429,37 +420,55 @@ def received_new_transaction():
 
 
 @app.get("/")
-def home():
-    return template("home.html")
+def test():
+    data = {}
+    data["Blockchain Length"] = str(BLOCKCHAIN.active_chain.length)
+    data["Last Block Hash"] = dhash(BLOCKCHAIN.active_chain.header_list[-1])
+    data["Public Key"] = str(get_wallet_from_db(consts.MINER_SERVER_PORT)[1])
+    data["Balance"] = str(check_balance(MY_WALLET.public_key))
+    return template("index.html", data=data)
 
 
-@app.get("/send")
-def get_send():
-    return template("send.html", message="")
+@app.get("/wallet")
+def wallet():
+    return template("wallet.html", message="", message_type="")
 
 
-@app.post("/send")
+@app.post("/wallet")
 def post_send():
-    receiver_port = request.forms.get("port")
-    publickey = get_wallet_from_db(receiver_port)[1]
-    bounty = request.forms.get("scoins")
+    receiver = str(request.forms.get("port"))
+    bounty = request.forms.get("amount")
     message = ""
+    message_type = "info"
     try:
+        publickey = ""
+        if len(receiver) < 10:
+            wallet = get_wallet_from_db(receiver)
+            if wallet is not None:
+                publickey = wallet[1]
+            else:
+                message = "Error with the Receiver Port ID, try again."
+                message_type = "danger"
+                return template("wallet.html", message=message, message_type=message_type)
+        else:
+            publickey = receiver
         amt = int(bounty)
-        if check_balance() > amt:
-            message = "Your scoins are sent !!!"
+        if check_balance(MY_WALLET.public_key) > amt:
+            message = "Your transaction is sent, please wait for it to be mined!"
             send_bounty(amt, publickey)
         else:
-            message = "You have insufficient balance !!!"
-        return template("send.html", message=message)
+            message = "You have Insufficient Balance!"
+            message_type = "warning"
+        return template("wallet.html", message=message, message_type=message_type)
     except Exception as e:
-        message = "The value must be numeric"
-        return template("send.html", message=message)
+        message = "Some Error Occured. Please try again later."
+        message_type = "danger"
+        return template("wallet.html", message=message, message_type=message_type)
 
 
-@app.get("/checkbalance")
+@app.get("/checkmybalance")
 def checkblance():
-    return str(check_balance())
+    return str(check_balance(MY_WALLET.public_key))
 
 
 @app.route("/static/<filename:path>", name="static")
@@ -476,7 +485,7 @@ def sendinfo():
         + dhash(BLOCKCHAIN.active_chain.header_list[-1])
         + "<br>"
         + "Balance "
-        + str(check_balance())
+        + str(check_balance(MY_WALLET.public_key))
         + "<br>Public Key: <br>"
         + str(get_wallet_from_db(consts.MINER_SERVER_PORT)[1])
     )
@@ -526,7 +535,10 @@ def visualize_chain():
     data = []
     start = BLOCKCHAIN.active_chain.length - 10 if BLOCKCHAIN.active_chain.length > 10 else 0
     headers = []
-    for hdr in BLOCKCHAIN.active_chain.header_list:
+    hdr_list = BLOCKCHAIN.active_chain.header_list
+    if len(hdr_list) > 200:
+        hdr_list = BLOCKCHAIN.active_chain.header_list[:100] + BLOCKCHAIN.active_chain.header_list[-100:]
+    for hdr in hdr_list:
         d = {}
         d["hash"] = dhash(hdr)[-5:]
         d["time"] = hdr.timestamp
