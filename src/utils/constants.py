@@ -50,6 +50,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--version", help="Print Implementation Version", action="store_true")
 parser.add_argument("-p", "--port", type=int, help="Port on which the fullnode should run", default=MINER_SERVER_PORT)
 parser.add_argument("-s", "--seed-server", type=str, help="Url on which the DNS seed server is running", default=SEED_SERVER_URL)
+parser.add_argument("-nm", "--no-mining", help="Do not Mine", action="store_true")
 parser.add_argument("-n", "--new-blockchain", help="Start a new Blockchain from Genesis Block", action="store_true")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("-v", "--verbose", action="store_true")
@@ -78,6 +79,13 @@ if args.new_blockchain:
     NEW_BLOCKCHAIN = True
 else:
     NEW_BLOCKCHAIN = False
+
+# Set if to mine of not
+if args.no_mining:
+    NO_MINING = True
+else:
+    NO_MINING = False
+
 
 # Coinbase Maturity
 COINBASE_MATURITY = 0

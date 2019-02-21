@@ -98,6 +98,9 @@ class Transaction(DataClassJson):
                 txout_same = False
                 break
         return attrs_same and txin_same and txout_same
+    
+    def hash(self):
+        return dhash(self)
 
     def sign(self, w=None):
         sign_copy_of_tx = copy.deepcopy(self)
@@ -295,7 +298,7 @@ class TxHistory:
 
     def get(self, pub_key: str) -> List[str]:
         if pub_key in self.tx_hist:
-            return list(self.tx_hist[pub_key])
+            return list(reversed(self.tx_hist[pub_key]))
         return []
 
 
@@ -430,11 +433,11 @@ class Chain:
                     amount = data[address]
                     timestamp = tx.timestamp
                     bhash = dhash(block.header)
-                    
-                    history = generate_tx_hist(amount, address, timestamp, bhash)
+                    thash = dhash(tx)
+                    history = generate_tx_hist(amount, pub_key, timestamp, bhash, thash)
                     self.transaction_history.append(address, history)
 
-                    history = generate_tx_hist(-amount, address, timestamp, bhash)
+                    history = generate_tx_hist(-amount, address, timestamp, bhash, thash)
                     self.transaction_history.append(pub_key, history)
 
             logger.info("Chain: Added Block " + str(block))
@@ -501,18 +504,17 @@ genesis_block_transaction = [
         version=1,
         locktime=0,
         timestamp=1535646190,
-        vin={0: TxIn(payout=None, sig=consts.GENESIS_BLOCK_SIGNATURE, pub_key="")},
+        vin={0: TxIn(payout=None, sig=consts.GENESIS_BLOCK_SIGNATURE, pub_key="Genesis")},
         vout={
-            0: TxOut(amount=consts.INITIAL_BLOCK_REWARD, address=consts.WALLET_PUBLIC),
-            1: TxOut(
+            0: TxOut(
                 amount=100000,
                 address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg==",
             ),
-            2: TxOut(
+            1: TxOut(
                 amount=100000,
                 address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE+nU1YCwX6JgQRPhMC4WCxyit86SeEtxyXz/o6zO5Qx/jgGQBLBDysDKnQ4x2ViIWcUyTciQIpu76OPN2qR8dMg==",
             ),
-            3: TxOut(
+            2: TxOut(
                 amount=100000,
                 address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKWOBAv4bhwG4FOvfLCX/loeK2FSw77PRpiR4alqqE8Dpm7vVZS2ixyNF1t8g0FVNxpoCUPjvMu7rIhoDkhnrPg==",
             ),

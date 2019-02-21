@@ -1,0 +1,51 @@
+% include('header.html', title="explorer")
+
+<h1 class="text-center">Account History</h1>
+
+<div class="container-fluid">
+    <div class="table-responsive col-sm-12">
+    <table class="table table-bordered table-dark-transparent">
+        <tr>
+            <th scope="row">Public Key</th>
+            <td>{{ pubkey }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Balance</th>
+            <td>{{ balance }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Transactions</th>
+            <td>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-transparent text-white">
+                        <tr>
+                            <th>#</th>
+                            <th>Amount</th>
+                            <th>Address</th>
+                            <th>Timestamp</th>
+                            <th>Tx</th>
+                        </tr>
+                    % for i, d in enumerate(tx_hist):
+                        % import json
+                        % d = json.loads(d) 
+                        % if d['amount'] > 0:   
+                        <tr class="text-success">
+                        % else:
+                        <tr class="text-danger">
+                        % end
+                            <td>{{ i }}</td>
+                            <td>{{ d['amount'] }}</td>
+                            <td><a class="text-decoration-none" href="/address/{{d['address']}}">{{ d['address'] }}</a></td>
+                            <td class="nowrap">{{ d['timestamp'] }}</td>
+                            <td class="nowrap"><a class="text-decoration-none" href="/transaction/{{d['bhash']}}/{{d['thash']}}">TX</a></td>
+                        </tr>
+                    % end
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
+    </div>
+</div>
+
+% include('footer.html')

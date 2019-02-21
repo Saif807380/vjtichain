@@ -1,0 +1,121 @@
+% include('header.html', title="explorer")
+% from datetime import datetime
+<div class="card text-center bg-dark-transparent text-white">
+    <div class="card-header">
+        <ul class="nav nav-pills card-header-pills navbar-dark">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#blocks">Blocks</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#transactions">Transactions</a>
+            </li>
+        </ul>
+    </div>
+    <div class="tab-content">
+        <div class="tab-pane active" id="blocks">
+            <div class="card-body">
+                % if len(blocks) > 0:
+                <div class="row">
+                    <div class="col-2">
+                        <div class="list-group" id="list-tab" role="tablist">
+                        % for i, block in enumerate(blocks):
+                            % active = ""
+                            % if i == 0:
+                                % active = "active"
+                            % end
+                            <a class="list-group-item list-group-item-action text-right {{ active }}" id="list-{{ i }}-list"
+                            data-toggle="list" href="#list-{{ i }}" role="tab" aria-controls="{{ i }}"><span class="d-none d-lg-inline">{{ str(block)[-12:] }}</span>   <span class="text-dark font-weight-bold">{{ block.header.height }}</span></a>
+                        % end
+                        </div>
+                    </div>
+                    <div class="col-10">
+                        <div class="tab-content" id="nav-tabContent">
+                            % for i, block in enumerate(blocks):
+                                % active = ""
+                                % if i == 0:
+                                    % active = "active"
+                                % end
+                                <div class="tab-pane fade show {{ active }}" id="list-{{i}}" role="tabpanel"
+                                    aria-labelledby="list-{{ i }}-list">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless table-transparent text-white">
+                                            <tr>
+                                                <th scope="row">Block Hash</th>
+                                                <td>{{ str(block) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Height</th>
+                                                <td>{{ block.header.height }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Timestamp</th>
+                                                <td>{{ str(datetime.fromtimestamp(block.header.timestamp).strftime("%d-%m-%Y %H:%M:%S")) }} ({{ block.header.timestamp }})</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Previous Block Hash</th>
+                                                <td>{{ block.header.prev_block_hash }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Merkle Root</th>
+                                                <td>{{ block.header.merkle_root }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Transactions</th>
+                                                <td>
+                                                    <table class="table table-borderless table-dark-transparent">
+                                                        % for num, transaction in enumerate(block.transactions):
+                                                        <tr>
+                                                           <th>{{ num }}</th>
+                                                           <td><a class="text-decoration-none" href="/transaction/{{str(block)}}/{{ transaction.hash() }}">{{ transaction.hash() }}</a></td>
+                                                        </tr>
+                                                        % end
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            % end
+                        </div>
+                    </div>
+                </div>
+                <a href="/explorer?prev={{ int(prev) + 1 }}" class="btn btn-primary">Previous Blocks</a>
+                <a href="/explorer?prev={{ int(prev) - 1 }}" class="btn btn-primary">Next Blocks</a>                
+                % end
+                % if len(blocks) <= 0:
+                    <h5 class="card-title">No blocks to show</h5>
+                    <a href="/explorer" class="btn btn-primary">Show Latest Blocks</a>
+                % end
+            </div>
+        </div>
+        <div class="tab-pane fade" id="transactions">
+            <div class="card-body">
+                % if len(transactions) > 0:
+                <h5 class="card-title">Unmined Transactions</h5>
+                    <table class="table table-borderless table-transparent text-white">
+                        <tr>
+                            <th>Sender</th>
+                            <th>Amount</th>
+                        </tr>
+                    % for tx in transactions:
+                            % pub, receivers = tx.summarize()
+                            % amount = 0
+                            % for key, amt in receivers.items():
+                                % amount += amt
+                            % end
+                        <tr>
+                            <td>{{ pub }}</td>
+                            <td>{{ amount }}</td>
+                        </tr>
+                    % end
+                    </table>
+                % end
+                % if len(transactions) <= 0:
+                <h5 class="card-title">No transactions in the Mempool</h5>                
+                % end
+            </div>
+        </div>
+    </div>
+</div>
+
+% include('footer.html')

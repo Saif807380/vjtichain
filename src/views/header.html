@@ -8,8 +8,8 @@
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
         crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
         integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
@@ -23,10 +23,35 @@
             margin: 0;
             height: 100%;
         }
+
         body {
             background: url({{ get_url('static', filename='img/vjtichain.png')}}) center center no-repeat, radial-gradient(circle,#272635, #02090e) left top no-repeat;
-        background-size: contain, cover;
+            background-size: contain, cover;
+            background-attachment: fixed;
         }
+
+        .bg-dark-transparent {
+        background-color: #343a40d0 !important;
+        }
+
+        .table-dark-transparent {
+        color: #fff;
+        background-color: #343a40d0;
+        }
+
+        th {
+            white-space: nowrap;
+        }
+
+        td {
+            white-space: normal !important; 
+            word-wrap: anywhere;
+        }
+
+        .nowrap {
+            white-space: nowrap !important;
+        }
+
     </style>
 </head>
 
@@ -47,6 +72,7 @@
                 <a class="nav-item nav-link {{ page.get("home", "") }}" href="/">Home <span class="sr-only">(current)</span></a>
                 <a class="nav-item nav-link {{ page.get("chains", "") }}" href="/chains">Chains</a>
                 <a class="nav-item nav-link {{ page.get("wallet", "") }}" href="/wallet">Wallet</a>
+                <a class="nav-item nav-link {{ page.get("explorer", "") }}" href="/explorer">Explorer</a>
             </div>
         </div>
     </nav>

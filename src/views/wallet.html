@@ -1,12 +1,34 @@
 % include('header.html', title="wallet")
 
+<script>
+     $(document).ready(
+        function() 
+        { 
+            $("#hidden").click(function(){
+            let password = prompt("Toggle Mining: Enter the Password", "");
+            $.post("/mining", password, function(data, status){
+                alert("Data: " + data + "\nStatus: " + status);
+            });
+            });
+        });
+</script>
+
 <div class="container">
-    <h4 class="text-right" onclick="update_balance();">Balance: 
-        <span id="bal">0</span>
-        <span>
-            <img class="img-fluid" alt="vjcoins" style="height: 30px" src="{{ get_url('static', filename='img/vjcoin.png') }}">
-        </span>
-    </h4>
+    <h1 class="text-center" id="hidden">Send Coins</h1>
+    <div class="row">
+        <div class="col-sm-8">
+            <h4>My PublicKey: </h4><a class="stretched-link text-decoration-none" href="/address/{{ pubkey }}">{{ pubkey }}</a>
+        </div>
+        <div class="col-sm-4">
+            <h4 class="text-right" onclick="update_balance();">Balance: 
+                <span id="bal">0</span>
+                <span>
+                    <img class="img-fluid" alt="vjcoins" style="height: 30px" src="{{ get_url('static', filename='img/vjcoin.png') }}">
+                </span>
+            </h4>
+        </div>
+    </div>
+    
 
 % if message!= "":
     <div class="alert alert-{{ message_type }} alert-dismissible fade show" role="alert">
@@ -16,7 +38,7 @@
         </button>
     </div>
 % end
-    <h1 class="text-center">Send Coins</h1>
+   
     <br>
     <form action="" method="POST">
         <div class="form-group">

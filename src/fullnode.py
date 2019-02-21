@@ -5,10 +5,11 @@ from multiprocessing import Pool, Process
 from threading import Thread, Timer
 from typing import Any, Dict, List
 from datetime import datetime
+import hashlib
 
 import requests
 import waitress
-from bottle import BaseTemplate, Bottle, request, response, static_file, template
+from bottle import BaseTemplate, Bottle, request, response, static_file, template, error
 
 import utils.constants as consts
 from core import Block, BlockChain, SingleOutput, Transaction, TxIn, TxOut, genesis_block
@@ -34,7 +35,7 @@ miner = Authority()
 
 def mining_thread_task():
     while True:
-        if not miner.is_mining():
+        if not miner.is_mining() and not consts.NO_MINING:
             miner.start_mining(BLOCKCHAIN.mempool, BLOCKCHAIN.active_chain, MY_WALLET)
         time.sleep(consts.MINING_INTERVAL_THRESHOLD // 2)
 
@@ -431,7 +432,7 @@ def test():
 
 @app.get("/wallet")
 def wallet():
-    return template("wallet.html", message="", message_type="")
+    return template("wallet.html", message="", message_type="", pubkey=MY_WALLET.public_key)
 
 
 @app.post("/wallet")
@@ -449,7 +450,7 @@ def post_send():
             else:
                 message = "Error with the Receiver Port ID, try again."
                 message_type = "danger"
-                return template("wallet.html", message=message, message_type=message_type)
+                return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
         else:
             publickey = receiver
         amt = int(bounty)
@@ -459,11 +460,11 @@ def post_send():
         else:
             message = "You have Insufficient Balance!"
             message_type = "warning"
-        return template("wallet.html", message=message, message_type=message_type)
+        return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
     except Exception as e:
         message = "Some Error Occured. Please try again later."
         message_type = "danger"
-        return template("wallet.html", message=message, message_type=message_type)
+        return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
 
 
 @app.get("/checkmybalance")
@@ -548,6 +549,63 @@ def visualize_chain():
     return template("chains.html", data=data, start=start)
 
 
+@app.get("/explorer")
+def explorer():
+    prev = int(request.query.prev or 0)
+    if prev < 0:
+        prev = 0
+    hdr_list = list(reversed(BLOCKCHAIN.active_chain.header_list))
+    indexes = [i for i in range(prev * 5, (prev + 1) * 5) if i < len(hdr_list)]
+    blocks = [Block.from_json(get_block_from_db(dhash(hdr_list[i]))).object() for i in indexes]
+    transactions = list(BLOCKCHAIN.mempool)
+    return template("explorer.html", blocks=blocks, transactions=transactions, prev=prev)
+
+
+@app.route("/transaction/<blockhash>/<txhash>", name="transaction")
+def transaction(blockhash, txhash):
+    try:
+        block = Block.from_json(get_block_from_db(blockhash)).object()
+        tx = None
+        for t in block.transactions:
+            if t.hash() == txhash:
+                tx = t
+    except Exception as e:
+        logger.debug(e)
+        return template("error.html")
+    return template("transaction.html", tx=tx, block=block)
+
+
+@app.route("/address/<pubkey:re:.+>", name="account")
+def account(pubkey):
+    balance = check_balance(pubkey)
+    tx_hist = BLOCKCHAIN.active_chain.transaction_history.get(pubkey)
+    return template("account.html", tx_hist=tx_hist, balance=balance, pubkey=pubkey)
+
+
+@app.post("/mining")
+def mining():
+    password = request.body.read().decode("utf-8")
+    logger.debug(password)
+    hashed = b"\xbd\x8eR\xce\xcb\x17\xccu@\xa2\xb9\x0e\xa3F\x06)k\xa5\x06\x80k_\xfb\x15\xf3!\xcb'\xd1\xbb\xf1\xe77\x17\xb7\xd3Ou\xacLp\xe0\xe5O\xb6\xfa\xea\x86\xfc`%\x95\xfe\xe3\xd8\xeaX\x15Y\xe7>4c\xb2"
+    dk = hashlib.pbkdf2_hmac('sha512', password.encode("utf-8"), b'magic', 100000)
+    if hashed == dk:
+        consts.NO_MINING = not consts.NO_MINING
+        logger.info("Mining: " + str(not consts.NO_MINING))
+        return "Mining Condition Changed"
+    else:
+        return "Password Mismatch"
+
+
+
+
+@app.route("/<url:re:.+>")
+@error(403)
+@error(404)
+@error(505)
+def error_handle(url="url", error="404"):
+    return template("error.html")
+
+
 if __name__ == "__main__":
     try:
         if consts.NEW_BLOCKCHAIN:
@@ -564,6 +622,8 @@ if __name__ == "__main__":
 
         # Start mining Thread
         Thread(target=start_mining_thread, daemon=True).start()
+        if consts.NO_MINING:
+            logger.info("FullNode: Not Mining")
 
         # Start server
         if LINE_PROFILING:

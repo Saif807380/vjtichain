@@ -1,0 +1,48 @@
+% include('header.html', title="explorer")
+
+<%
+    from datetime import datetime
+    pub, receivers = tx.summarize()
+%>
+<div class="container-fluid">
+    <h1 class="text-center">Transaction Details</h1>
+    <table class="table table-bordered table-dark-transparent">
+        <tr>
+            <th scope="row">Transaction Hash</th>
+            <td>{{ tx.hash() }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Block Hash</th>
+            <td>{{ str(block) }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Timestamp</th>
+            <td>{{ str(datetime.fromtimestamp(tx.timestamp).strftime("%d-%m-%Y %H:%M:%S")) }}   ({{ tx.timestamp }})</td>
+        </tr>
+        <tr>
+            <th scope="row">Sender Address</th>
+            <td><a class="text-decoration-none" href="/address/{{ pub }}">{{ pub }}</a></td>
+        </tr>
+        <tr>
+            <th scope="row">Receivers</th>
+            <td>
+                <div class="table-responsive">
+                    <table class="table table-transparent text-white">
+                        <tr>
+                            <th>Amount</th>
+                            <th>Address</th>
+                        </tr>
+                        % for key, amt in receivers.items():
+                        <tr>
+                            <td>{{ amt }}</td>
+                            <td><a class="text-decoration-none" href="/address/{{ key }}">{{ key }}</a></td>
+                        </tr>
+                        % end
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+% include('footer.html')
