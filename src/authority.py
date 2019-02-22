@@ -40,8 +40,6 @@ class Authority:
         return False
 
     def start_mining(self, mempool: Set[Transaction], chain: Chain, wallet: Wallet):
-
-
         if not self.is_mining():
             if is_my_turn(wallet):
                 if len(mempool) > consts.MINING_TRANSACTION_THRESHOLD or (
@@ -51,36 +49,17 @@ class Authority:
                     local_utxo = copy.deepcopy(chain.utxo)
                     mempool_copy = copy.deepcopy(mempool)
                     # Validating each transaction in block
-                    for t in mempool_copy:                        
-                        thash = dhash(t)
+                    for t in mempool_copy:
                         # Remove the spent outputs
                         for tinput in t.vin:
                             so = t.vin[tinput].payout
-                            
                             if so:
-                                # print("------------------------"+local_utxo.get(so)[0])
-                                print(local_utxo.get(so)[0])
                                 if local_utxo.get(so)[0] is not None:
-                                    print(local_utxo.remove(so))
-                                    print(local_utxo)
+                                    local_utxo.remove(so)
                                 else:
-                                    print("Before-------------------------------------------------")
-                                    print(mempool)
                                     mempool.remove(t)
-                                    print("After-------------------------------------------------")
-                                    print(mempool)
-                                    logger.error("1Miner: Single output missing,Transaction removed from mempool")
-
                             else:
                                 mempool.remove(t)
-                                print(mempool)
-                                logger.error("2Miner: Single output missing,Transaction removed from mempool")
-                                
-                        # Add new unspent outputs
-                        # for touput in t.vout:
-                        #     local_utxo.set(SingleOutput(txid=thash, vout=touput), t.vout[touput], block.header)
-                        
-
                     self.p = Process(target=self.__mine, args=(mempool, chain, wallet))
                     self.p.start()
                     logger.debug("Miner: Started mining")
@@ -122,4 +101,3 @@ class Authority:
         requests.post("http://0.0.0.0:" + str(consts.MINER_SERVER_PORT) + "/newblock", data=compress(block.to_json()))
         logger.info(f"Miner: Mined Block with {len(mlist)} transactions.")
         return
-

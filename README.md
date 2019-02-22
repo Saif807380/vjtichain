@@ -46,7 +46,10 @@ python fullnode.py -p 9000 -n -q # Run the full node on port(-p) 9000, (-n) new 
 ```
 sudo apt install fail2ban
 sudo cp ddoskill.conf /etc/fail2ban/filter.d/
+# Change Log file location in jail.local before copying
 sudo cp jail.local /etc/fail2ban/
 sudo service fail2ban start # or restart
 sudo fail2ban-client start # or reload
+# To check ban status
+sudo fail2ban-client status ddoskill
 ```

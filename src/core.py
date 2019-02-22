@@ -347,8 +347,6 @@ class Chain:
                 so = t.vin[tinput].payout
                 if so:
                     self.utxo.remove(so)
-                else:
-                    logger.error("Chain: Single output missing,Transaction invalid!!!!!")
             # Add new unspent outputs
             for touput in t.vout:
                 self.utxo.set(SingleOutput(txid=thash, vout=touput), t.vout[touput], block.header)
@@ -420,11 +418,10 @@ class Chain:
                         if local_utxo.get(so)[0] is not None:
                             local_utxo.remove(so)
                         else:
-
-                            logger.error("Chain: Single output missing,Transaction invalid")
+                            logger.error("Chain: Single output missing in UTxO, Transaction invalid")
                             return False
                     else:
-                        logger.error("Chain: Single output missing,Transaction invalid!!!!!")
+                        logger.error("Chain: No Single output, Transaction invalid")
                         return False
                 # Add new unspent outputs
                 for touput in t.vout:

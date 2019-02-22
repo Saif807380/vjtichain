@@ -202,11 +202,8 @@ def log_ip(request, fname):
 def checkingbalance():
     log_ip(request, inspect.stack()[0][3])
     data = request.json
-    logger.debug(data)
     public_key = data["public_key"]
-
     current_balance = check_balance(public_key)
-    logger.debug("PublicKey: " + str(public_key) + " Balance: " + str(current_balance))
     return str(current_balance)
 
 
@@ -214,7 +211,6 @@ def checkingbalance():
 def make_transaction():
     log_ip(request, inspect.stack()[0][3])
     data = request.json
-    logger.debug(data)
 
     bounty = int(data["bounty"])
     receiver_public_key = data["receiver_public_key"]
@@ -224,7 +220,7 @@ def make_transaction():
 
     if current_balance < bounty:
         logger.debug("Insufficient Balance to make Transaction")
-        return "False " + str(current_balance - bounty)
+        return "Insufficient Balance to make Transaction, need more " + str(bounty - current_balance)
     else:
         transaction = Transaction(
             version=1,
@@ -233,7 +229,6 @@ def make_transaction():
             vin={},
             vout={0: TxOut(amount=bounty, address=receiver_public_key), 1: TxOut(amount=0, address=sender_public_key)},
         )
-        # create_transaction(transaction, MY_WALLET, bounty)
 
         current_amount = 0
         i = 0
@@ -247,8 +242,6 @@ def make_transaction():
                 i += 1
         transaction.vout[1].amount = current_amount - bounty
 
-        logger.debug(transaction)
-
         data = {}
         data["send_this"] = transaction.to_json()
         transaction.vin = {}
@@ -260,7 +253,6 @@ def make_transaction():
 def send_transaction():
     log_ip(request, inspect.stack()[0][3])
     data = request.json
-    logger.debug(data)
     transaction = Transaction.from_json(data["transaction"]).object()
     sig = data["signature"]
     transaction.add_sign(sig)
@@ -285,8 +277,6 @@ def send_transaction():
 def transaction_history():
     log_ip(request, inspect.stack()[0][3])
     data = request.json
-    logger.debug(data)
-
     public_key = data["public_key"]
     tx_hist = BLOCKCHAIN.active_chain.transaction_history.get(public_key)
     return json.dumps(tx_hist)
@@ -343,12 +333,8 @@ def getblock():
 def checkblock():
     log_ip(request, inspect.stack()[0][3])
     headerhash = request.forms.get("headerhash")
-    response.content_type = "application/json"
-    if headerhash:
-        with Pool(4) as p:
-            hash_list = set(p.map(dhash, BLOCKCHAIN.active_chain.header_list))
-            if headerhash in hash_list:
-                return json.dumps(True)
+    if get_block_from_db(headerhash):
+        return json.dumps(True)
     return json.dumps(False)
 
 
@@ -359,7 +345,6 @@ def send_block_hashes():
     hash_list = []
     for i in range(peer_height, BLOCKCHAIN.active_chain.length):
         hash_list.append(dhash(BLOCKCHAIN.active_chain.header_list[i]))
-    # logger.debug("Server: Sending Peer this Block Hash List: " + str(hash_list))
     return compress(json.dumps(hash_list)).decode()
 
 
