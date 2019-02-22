@@ -586,16 +586,14 @@ def account(pubkey):
 def mining():
     password = request.body.read().decode("utf-8")
     logger.debug(password)
-    hashed = b"\xbd\x8eR\xce\xcb\x17\xccu@\xa2\xb9\x0e\xa3F\x06)k\xa5\x06\x80k_\xfb\x15\xf3!\xcb'\xd1\xbb\xf1\xe77\x17\xb7\xd3Ou\xacLp\xe0\xe5O\xb6\xfa\xea\x86\xfc`%\x95\xfe\xe3\xd8\xeaX\x15Y\xe7>4c\xb2"
-    dk = hashlib.pbkdf2_hmac('sha512', password.encode("utf-8"), b'magic', 100000)
+    hashed = b'\x11`\x1e\xdd\xd1\xb6\x80\x0f\xd4\xb0t\x90\x9b\xd3]\xa0\xcc\x1d\x04$\x8b\xb1\x19J\xaa!T5-\x9eJ\xfcI5\xc0\xbb\xf5\xb1\x9d\xba\xbef@\xa1)\xcf\x9b]c(R\x91\x0e\x9dMM\xb6\x94\xa9\xe2\x94il\x15'
+    dk = hashlib.pbkdf2_hmac("sha512", password.encode("utf-8"), b'forgeteverythingthatyouthinkyouknow', 200000)
     if hashed == dk:
         consts.NO_MINING = not consts.NO_MINING
         logger.info("Mining: " + str(not consts.NO_MINING))
-        return "Mining Condition Changed"
+        return "Mining Toggled, " + "NOT MINING" if consts.NO_MINING else "MINING"
     else:
         return "Password Mismatch"
-
-
 
 
 @app.route("/<url:re:.+>")

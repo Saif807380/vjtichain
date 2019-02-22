@@ -36,15 +36,14 @@ def merkle_hash(transactions: List["Transaction"]) -> str:
     """ Computes and returns the merkle tree root for a list of transactions """
     if transactions is None or len(transactions) == 0:
         return "F" * consts.HASH_LENGTH_HEX
-    if len(transactions) == 1:
-        return dhash(transactions[0])
-    if len(transactions) % 2 != 0:
-        transactions = transactions + [transactions[-1]]
+
     transactions_hash = list(map(dhash, transactions))
 
     def recursive_merkle_hash(t: List[str]) -> str:
         if len(t) == 1:
             return t[0]
+        if len(t) % 2 != 0:
+            t = t + [t[-1]]
         t_child = []
         for i in range(0, len(t), 2):
             new_hash = dhash(t[i] + t[i + 1])

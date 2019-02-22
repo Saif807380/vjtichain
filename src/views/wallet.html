@@ -7,7 +7,7 @@
             $("#hidden").click(function(){
             let password = prompt("Toggle Mining: Enter the Password", "");
             $.post("/mining", password, function(data, status){
-                alert("Data: " + data + "\nStatus: " + status);
+                alert(data);
             });
             });
         });
