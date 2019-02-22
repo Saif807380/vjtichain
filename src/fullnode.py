@@ -6,7 +6,7 @@ from threading import Thread, Timer
 from typing import Any, Dict, List
 from datetime import datetime
 import hashlib
-
+import inspect
 import requests
 import waitress
 from bottle import BaseTemplate, Bottle, request, response, static_file, template, error
@@ -14,7 +14,7 @@ from bottle import BaseTemplate, Bottle, request, response, static_file, templat
 import utils.constants as consts
 from core import Block, BlockChain, SingleOutput, Transaction, TxIn, TxOut, genesis_block
 from authority import Authority
-from utils.logger import logger
+from utils.logger import logger, iplogger
 from utils.storage import get_block_from_db, get_wallet_from_db, read_header_list_from_db
 from utils.utils import compress, decompress, dhash
 from wallet import Wallet
@@ -194,9 +194,13 @@ def create_transaction(tx: Transaction, w: Wallet, bounty: int):
     tx.vout[1].amount = current_amount - bounty
     tx.sign(w)
 
+def log_ip(request, fname):
+    client_ip = request.environ.get("HTTP_X_FORWARDED_FOR") or request.environ.get("REMOTE_ADDR")
+    iplogger.info(f"{client_ip} : Called function {fname}")
 
 @app.post("/checkBalance")
-def balance():
+def checkingbalance():
+    log_ip(request, inspect.stack()[0][3])
     data = request.json
     logger.debug(data)
     public_key = data["public_key"]
@@ -208,6 +212,7 @@ def balance():
 
 @app.post("/makeTransaction")
 def make_transaction():
+    log_ip(request, inspect.stack()[0][3])
     data = request.json
     logger.debug(data)
 
@@ -253,6 +258,7 @@ def make_transaction():
 
 @app.post("/sendTransaction")
 def send_transaction():
+    log_ip(request, inspect.stack()[0][3])
     data = request.json
     logger.debug(data)
     transaction = Transaction.from_json(data["transaction"]).object()
@@ -277,6 +283,7 @@ def send_transaction():
 
 @app.post("/transactionHistory")
 def transaction_history():
+    log_ip(request, inspect.stack()[0][3])
     data = request.json
     logger.debug(data)
 
@@ -286,7 +293,8 @@ def transaction_history():
 
 
 @app.post("/greetpeer")
-def hello():
+def greet_peer_f():
+    log_ip(request, inspect.stack()[0][3])
     try:
         peer = {}
         peer["port"] = request.forms.get("port")
@@ -326,12 +334,14 @@ def cached_get_block(headerhash: str) -> str:
 
 @app.post("/getblock")
 def getblock():
+    log_ip(request, inspect.stack()[0][3])
     hhash = request.forms.get("headerhash")
     return cached_get_block(hhash)
 
 
 @app.post("/checkblock")
 def checkblock():
+    log_ip(request, inspect.stack()[0][3])
     headerhash = request.forms.get("headerhash")
     response.content_type = "application/json"
     if headerhash:
@@ -344,6 +354,7 @@ def checkblock():
 
 @app.post("/getblockhashes")
 def send_block_hashes():
+    log_ip(request, inspect.stack()[0][3])
     peer_height = int(request.forms.get("myheight"))
     hash_list = []
     for i in range(peer_height, BLOCKCHAIN.active_chain.length):
@@ -385,6 +396,7 @@ def process_new_block(request_data: bytes) -> str:
 
 @app.post("/newblock")
 def received_new_block():
+    log_ip(request, inspect.stack()[0][3])
     return process_new_block(request.body.read())
 
 
@@ -417,11 +429,13 @@ def process_new_transaction(request_data: bytes) -> str:
 # Transactions for all active chains
 @app.post("/newtransaction")
 def received_new_transaction():
+    log_ip(request, inspect.stack()[0][3])
     return process_new_transaction(request.body.read())
 
 
 @app.get("/")
-def test():
+def home():
+    log_ip(request, inspect.stack()[0][3])
     data = {}
     data["Blockchain Length"] = str(BLOCKCHAIN.active_chain.length)
     data["Last Block Hash"] = dhash(BLOCKCHAIN.active_chain.header_list[-1])
@@ -432,11 +446,13 @@ def test():
 
 @app.get("/wallet")
 def wallet():
+    log_ip(request, inspect.stack()[0][3])
     return template("wallet.html", message="", message_type="", pubkey=MY_WALLET.public_key)
 
 
 @app.post("/wallet")
-def post_send():
+def wallet_post():
+    log_ip(request, inspect.stack()[0][3])
     receiver = str(request.forms.get("port"))
     bounty = request.forms.get("amount")
     message = ""
@@ -469,16 +485,25 @@ def post_send():
 
 @app.get("/checkmybalance")
 def checkblance():
+    log_ip(request, inspect.stack()[0][3])
     return str(check_balance(MY_WALLET.public_key))
 
 
 @app.route("/static/<filename:path>", name="static")
 def serve_static(filename):
+    log_ip(request, inspect.stack()[0][3])
     return static_file(filename, root="static")
+
+
+@app.get('/favicon.ico')
+def get_favicon():
+    log_ip(request, inspect.stack()[0][3])
+    return static_file('favicon.ico', root='static')
 
 
 @app.get("/info")
 def sendinfo():
+    log_ip(request, inspect.stack()[0][3])
     s = (
         "No. of Blocks: "
         + str(BLOCKCHAIN.active_chain.length)
@@ -533,6 +558,7 @@ def render_block_header(hdr):
 
 @app.get("/chains")
 def visualize_chain():
+    log_ip(request, inspect.stack()[0][3])
     data = []
     start = BLOCKCHAIN.active_chain.length - 10 if BLOCKCHAIN.active_chain.length > 10 else 0
     headers = []
@@ -551,6 +577,7 @@ def visualize_chain():
 
 @app.get("/explorer")
 def explorer():
+    log_ip(request, inspect.stack()[0][3])
     prev = int(request.query.prev or 0)
     if prev < 0:
         prev = 0
@@ -563,6 +590,7 @@ def explorer():
 
 @app.route("/transaction/<blockhash>/<txhash>", name="transaction")
 def transaction(blockhash, txhash):
+    log_ip(request, inspect.stack()[0][3])
     try:
         block = Block.from_json(get_block_from_db(blockhash)).object()
         tx = None
@@ -577,6 +605,7 @@ def transaction(blockhash, txhash):
 
 @app.route("/address/<pubkey:re:.+>", name="account")
 def account(pubkey):
+    log_ip(request, inspect.stack()[0][3])
     balance = check_balance(pubkey)
     tx_hist = BLOCKCHAIN.active_chain.transaction_history.get(pubkey)
     return template("account.html", tx_hist=tx_hist, balance=balance, pubkey=pubkey)
@@ -584,6 +613,7 @@ def account(pubkey):
 
 @app.post("/mining")
 def mining():
+    log_ip(request, inspect.stack()[0][3])
     password = request.body.read().decode("utf-8")
     logger.debug(password)
     hashed = b'\x11`\x1e\xdd\xd1\xb6\x80\x0f\xd4\xb0t\x90\x9b\xd3]\xa0\xcc\x1d\x04$\x8b\xb1\x19J\xaa!T5-\x9eJ\xfcI5\xc0\xbb\xf5\xb1\x9d\xba\xbef@\xa1)\xcf\x9b]c(R\x91\x0e\x9dMM\xb6\x94\xa9\xe2\x94il\x15'
@@ -601,6 +631,7 @@ def mining():
 @error(404)
 @error(505)
 def error_handle(url="url", error="404"):
+    log_ip(request, inspect.stack()[0][3])
     return template("error.html")
 
 

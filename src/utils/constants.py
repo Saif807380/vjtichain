@@ -4,7 +4,7 @@ import sys
 
 # LOGGING CONSTANTS
 LOG_DIRECTORY = "log/"
-DATE_FORMAT = "%d %b %H:%M:%S"
+DATE_FORMAT = "%b %d %H:%M:%S"
 LOG_LEVEL = logging.DEBUG
 
 # DNS SEED CONSTANTS

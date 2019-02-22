@@ -1,0 +1,9 @@
+[ddoskill]
+enabled = true
+port = 1000:10000
+filter = ddoskill
+action = iptables-allports[name=fail2ban]
+logpath = /home/memes/Desktop/vjtichain/src/log/ip.log
+findtime = 15
+bantime = 60
+maxretry = 60

@@ -40,3 +40,13 @@ python dns_seed.py # Run the central dns server for peer discovery
 python fullnode.py -p 9000 -n -q # Run the full node on port(-p) 9000, (-n) new blockchain from genesis i.e. no restore and in quiet mode(-q)
 # To terminate press ctrl+C twice.
 ```
+
+
+#### Add DDOS ban
+```
+sudo apt install fail2ban
+sudo cp ddoskill.conf /etc/fail2ban/filter.d/
+sudo cp jail.local /etc/fail2ban/
+sudo service fail2ban start # or restart
+sudo fail2ban-client start # or reload
+```
