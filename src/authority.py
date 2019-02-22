@@ -9,7 +9,7 @@ from typing import List, Optional, Set, Tuple
 import requests
 
 import utils.constants as consts
-from core import Block, BlockHeader, Chain, Transaction
+from core import Block, BlockHeader, Chain, Transaction, SingleOutput
 from utils.logger import logger
 from utils.utils import compress, dhash, merkle_hash, get_time_difference_from_now_secs
 from wallet import Wallet
@@ -40,12 +40,47 @@ class Authority:
         return False
 
     def start_mining(self, mempool: Set[Transaction], chain: Chain, wallet: Wallet):
+
+
         if not self.is_mining():
             if is_my_turn(wallet):
                 if len(mempool) > consts.MINING_TRANSACTION_THRESHOLD or (
                     len(mempool) > 0
                     and abs(get_time_difference_from_now_secs(chain.header_list[-1].timestamp)) > consts.MINING_INTERVAL_THRESHOLD
                 ):
+                    local_utxo = copy.deepcopy(chain.utxo)
+                    mempool_copy = copy.deepcopy(mempool)
+                    # Validating each transaction in block
+                    for t in mempool_copy:                        
+                        thash = dhash(t)
+                        # Remove the spent outputs
+                        for tinput in t.vin:
+                            so = t.vin[tinput].payout
+                            
+                            if so:
+                                # print("------------------------"+local_utxo.get(so)[0])
+                                print(local_utxo.get(so)[0])
+                                if local_utxo.get(so)[0] is not None:
+                                    print(local_utxo.remove(so))
+                                    print(local_utxo)
+                                else:
+                                    print("Before-------------------------------------------------")
+                                    print(mempool)
+                                    mempool.remove(t)
+                                    print("After-------------------------------------------------")
+                                    print(mempool)
+                                    logger.error("1Miner: Single output missing,Transaction removed from mempool")
+
+                            else:
+                                mempool.remove(t)
+                                print(mempool)
+                                logger.error("2Miner: Single output missing,Transaction removed from mempool")
+                                
+                        # Add new unspent outputs
+                        # for touput in t.vout:
+                        #     local_utxo.set(SingleOutput(txid=thash, vout=touput), t.vout[touput], block.header)
+                        
+
                     self.p = Process(target=self.__mine, args=(mempool, chain, wallet))
                     self.p.start()
                     logger.debug("Miner: Started mining")

@@ -347,6 +347,8 @@ class Chain:
                 so = t.vin[tinput].payout
                 if so:
                     self.utxo.remove(so)
+                else:
+                    logger.error("Chain: Single output missing,Transaction invalid!!!!!")
             # Add new unspent outputs
             for touput in t.vout:
                 self.utxo.set(SingleOutput(txid=thash, vout=touput), t.vout[touput], block.header)
@@ -395,6 +397,9 @@ class Chain:
 
     def is_block_valid(self, block: Block):
         # Check if the block is valid -1
+
+        local_utxo = copy.deepcopy(self.utxo)
+
         if not block.is_valid():
             logger.debug("Block is not valid")
             return False
@@ -405,8 +410,26 @@ class Chain:
             return False
 
         # Validating each transaction in block
-        for tx in block.transactions:
-            if not self.is_transaction_valid(tx):
+        for t in block.transactions:
+            if self.is_transaction_valid(t):
+                thash = dhash(t)
+                # Remove the spent outputs
+                for tinput in t.vin:
+                    so = t.vin[tinput].payout
+                    if so:
+                        if local_utxo.get(so)[0] is not None:
+                            local_utxo.remove(so)
+                        else:
+
+                            logger.error("Chain: Single output missing,Transaction invalid")
+                            return False
+                    else:
+                        logger.error("Chain: Single output missing,Transaction invalid!!!!!")
+                        return False
+                # Add new unspent outputs
+                for touput in t.vout:
+                    local_utxo.set(SingleOutput(txid=thash, vout=touput), t.vout[touput], block.header)
+            else:
                 logger.debug("Chain: Transaction not valid")
                 return False
 
