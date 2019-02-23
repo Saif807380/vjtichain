@@ -186,8 +186,13 @@ def create_transaction(tx: Transaction, w: Wallet, bounty: int):
     tx.vout[1].amount = current_amount - bounty
     tx.sign(w)
 
+
+def get_ip(request):
+    return request.environ.get("HTTP_X_FORWARDED_FOR") or request.environ.get("REMOTE_ADDR")
+
+
 def log_ip(request, fname):
-    client_ip = request.environ.get("HTTP_X_FORWARDED_FOR") or request.environ.get("REMOTE_ADDR")
+    client_ip = get_ip(request)
     iplogger.info(f"{client_ip} : Called function {fname}")
 
 @app.post("/checkBalance")
@@ -213,6 +218,7 @@ def make_transaction():
 
     if current_balance < bounty:
         logger.debug("Insufficient Balance to make Transaction")
+        response.status = 400
         return "Insufficient Balance to make Transaction, need more " + str(bounty - current_balance)
     else:
         transaction = Transaction(
@@ -259,6 +265,7 @@ def send_transaction():
             timeout=(5, 1),
         )
     except Exception as e:
+        response.status = 400
         logger.error("Wallet: Could not Send Transaction. Try Again." + str(e))
         return "Try Again"
     else:
