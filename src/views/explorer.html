@@ -24,7 +24,7 @@
                                 % active = "active"
                             % end
                             <a class="list-group-item list-group-item-action text-right {{ active }}" id="list-{{ i }}-list"
-                            data-toggle="list" href="#list-{{ i }}" role="tab" aria-controls="{{ i }}"><span class="d-none d-lg-inline">{{ str(block)[-12:] }}</span>   <span class="text-dark font-weight-bold">{{ block.header.height }}</span></a>
+                            data-toggle="list" href="#list-{{ i }}" role="tab" aria-controls="{{ i }}"><span class="d-none d-lg-inline font-italic">{{ str(block)[-12:] }}</span>   <span class="text-dark font-weight-bold">{{ block.header.height }}</span></a>
                         % end
                         </div>
                     </div>
@@ -41,10 +41,10 @@
                                         <table class="table table-borderless table-transparent text-white">
                                             <tr>
                                                 <th scope="row">Block Hash</th>
-                                                <td>{{ str(block) }}</td>
+                                                <td><a href="/block/{{str(block) }}">{{ str(block) }}</a></td>
                                             </tr>
                                             <tr>
-                                                <th scope="row">Height</th>
+                                                <th scope="row">Block Number</th>
                                                 <td>{{ block.header.height }}</td>
                                             </tr>
                                             <tr>
@@ -53,11 +53,15 @@
                                             </tr>
                                             <tr>
                                                 <th scope="row">Previous Block Hash</th>
-                                                <td>{{ block.header.prev_block_hash }}</td>
+                                                <td><a href="/block/{{ block.header.prev_block_hash }}">{{ block.header.prev_block_hash }}</a></td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">Merkle Root</th>
                                                 <td>{{ block.header.merkle_root }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">No. of Transactions</th>
+                                                <td>{{ len(block.transactions) }}</td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">Transactions</th>
@@ -80,7 +84,9 @@
                     </div>
                 </div>
                 <a href="/explorer?prev={{ int(prev) + 1 }}" class="btn btn-primary">Previous Blocks</a>
+                    % if int(prev) > 0:
                 <a href="/explorer?prev={{ int(prev) - 1 }}" class="btn btn-primary">Next Blocks</a>                
+                    % end
                 % end
                 % if len(blocks) <= 0:
                     <h5 class="card-title">No blocks to show</h5>

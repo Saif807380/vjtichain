@@ -42,7 +42,7 @@ MAXIMUM_TARGET_DIFFICULTY = "0000fffffffffffffffffffffffffffffffffffffffffffffff
 BLOCK_MINING_SPEEDUP = 20
 
 # Max History
-MAX_TRANSACTION_HISTORY_TO_KEEP = 10
+MAX_TRANSACTION_HISTORY_TO_KEEP = 2048
 
 # Define Values from arguments passed
 parser = argparse.ArgumentParser()

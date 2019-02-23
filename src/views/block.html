@@ -1,0 +1,47 @@
+% include('header.html', title="explorer")
+% from datetime import datetime
+
+<div class="container-fluid">
+    <h1 class="text-center">Block Details</h1>
+    <table class="table table-bordered table-dark-transparent">
+        <tr>
+            <th scope="row">Block Hash</th>
+            <td>{{ str(block) }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Block Number</th>
+            <td>{{ block.header.height }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Timestamp</th>
+            <td>{{ str(datetime.fromtimestamp(block.header.timestamp).strftime("%d-%m-%Y %H:%M:%S")) }} ({{ block.header.timestamp }})</td>
+        </tr>
+        <tr>
+            <th scope="row">Previous Block Hash</th>
+            <td><a href="/block/{{ block.header.prev_block_hash }}">{{ block.header.prev_block_hash }}</a></td>
+        </tr>
+        <tr>
+            <th scope="row">Merkle Root</th>
+            <td>{{ block.header.merkle_root }}</td>
+        </tr>
+        <tr>
+            <th scope="row">No. of Transactions</th>
+            <td>{{ len(block.transactions) }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Transactions</th>
+            <td>
+                <table class="table table-borderless table-dark-transparent">
+                    % for num, transaction in enumerate(block.transactions):
+                    <tr>
+                       <th>{{ num }}</th>
+                       <td><a class="text-decoration-none" href="/transaction/{{str(block)}}/{{ transaction.hash() }}">{{ transaction.hash() }}</a></td>
+                    </tr>
+                    % end
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+
+% include('footer.html')
