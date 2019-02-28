@@ -1,0 +1,16 @@
+% include('header.html', title="info")
+
+<div class="card-columns">
+    % for key, val in data.items():
+    <div class="card text-white bg-dark-transparent border-secondary mb-3">
+        <div class="card-header">
+            <h5>{{ key }}</h5>
+        </div>
+        <div class="card-body">
+            <p class="card-text">{{ val }}</p>
+        </div>
+    </div>
+    % end
+</div>
+
+% include('footer.html')

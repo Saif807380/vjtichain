@@ -411,12 +411,33 @@ def received_new_transaction():
 @app.get("/")
 def home():
     log_ip(request, inspect.stack()[0][3])
-    data = {}
-    data["Blockchain Length"] = str(BLOCKCHAIN.active_chain.length)
-    data["Last Block Hash"] = dhash(BLOCKCHAIN.active_chain.header_list[-1])
-    data["Public Key"] = str(get_wallet_from_db(consts.MINER_SERVER_PORT)[1])
-    data["Balance"] = str(check_balance(MY_WALLET.public_key))
-    return template("index.html", data=data)
+    message = ""
+    message_type = "info"
+    return template("index.html", message=message, message_type=message_type)
+
+
+@app.post("/")
+def puzzle():
+    log_ip(request, inspect.stack()[0][3])
+    message = ""
+    message_type = "info"
+
+    answer = request.forms.get("answer")
+    pubkey = request.forms.get("pubkey")
+
+    if answer.lower() == "Hello".lower():
+        logger.debug("Valid Answer")
+        message = "Well Done"
+    else:
+        message = "Invalid Answer"
+        message_type = "danger"
+
+    return template("index.html", message=message, message_type=message_type)
+
+
+@app.get('/about')
+def about():
+    return template("about.html")
 
 
 @app.get("/wallet")

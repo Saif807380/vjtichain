@@ -39,6 +39,10 @@
         background-color: #343a40d0;
         }
 
+        .jumbotron {
+            background-color: #343a40d0 !important;
+        }
+
         th {
             white-space: nowrap;
         }
@@ -70,8 +74,9 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <div class="navbar-nav">
                 <a class="nav-item nav-link {{ page.get("home", "") }}" href="/">Home <span class="sr-only">(current)</span></a>
-                <a class="nav-item nav-link {{ page.get("chains", "") }}" href="/chains">Chains</a>
+                <a class="nav-item nav-link {{ page.get("about", "") }}" href="/about">About</a>
                 <a class="nav-item nav-link {{ page.get("wallet", "") }}" href="/wallet">Wallet</a>
+                <a class="nav-item nav-link {{ page.get("chains", "") }}" href="/chains">Chains</a>
                 <a class="nav-item nav-link {{ page.get("explorer", "") }}" href="/explorer">Explorer</a>
             </div>
         </div>
