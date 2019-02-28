@@ -149,22 +149,16 @@ def check_balance(pub_key: str) -> int:
     return int(current_balance)
 
 
-def send_bounty(bounty: int, receiver_public_key: str):
+def send_bounty(receiver_public_keys: List[str], amounts: List[int]):
     current_balance = check_balance(MY_WALLET.public_key)
-    if current_balance < bounty:
+    total_amount = sum(amounts)
+    if current_balance < total_amount:
         logger.debug("Insuficient balance ")
         logger.debug("Current balance : " + str(current_balance))
-        logger.debug("You need " + str(current_balance - bounty) + "more money")
+        logger.debug("You need " + str(current_balance - total_amount) + "more money")
 
     else:
-        transaction = Transaction(
-            version=1,
-            locktime=0,
-            timestamp=int(time.time()),
-            vin={},
-            vout={0: TxOut(amount=bounty, address=receiver_public_key), 1: TxOut(amount=0, address=MY_WALLET.public_key)},
-        )
-        create_transaction(transaction, MY_WALLET, bounty)
+        transaction = create_transaction(receiver_public_keys, amounts, MY_WALLET)
 
         logger.debug(transaction)
         logger.info("Wallet: Attempting to Send Transaction")
@@ -180,19 +174,36 @@ def send_bounty(bounty: int, receiver_public_key: str):
             logger.info("Wallet: Transaction Sent, Wait for it to be Mined")
 
 
-def create_transaction(tx: Transaction, w: Wallet, bounty: int):
+def create_transaction(receiver_public_keys: List[str], amounts: List[int], w: Wallet)-> Transaction:
+
+    vout = {}
+    vin = {}
     current_amount = 0
+    total_amount = sum(amounts)
     i = 0
     for so, utxo_list in BLOCKCHAIN.active_chain.utxo.utxo.items():
         tx_out = utxo_list[0]
-        if current_amount >= bounty:
+        if current_amount >= total_amount:
             break
         if tx_out.address == w.public_key:
             current_amount += tx_out.amount
-            tx.vin[i] = TxIn(payout=SingleOutput.from_json(so), pub_key=w.public_key, sig="")
+            vin[i] = TxIn(payout=SingleOutput.from_json(so), pub_key=w.public_key, sig="")
             i += 1
-    tx.vout[1].amount = current_amount - bounty
+
+    for i, address in enumerate(receiver_public_keys):
+        vout[i] = TxOut(amount=amounts[i], address=address)
+    vout[i + 1] = TxOut(amount=(current_amount - total_amount), address=w.public_key)
+
+    tx = Transaction(
+        version=consts.MINER_VERSION,
+        locktime=0,
+        timestamp=int(time.time()),
+        vin=vin,
+        vout=vout,
+    )
     tx.sign(w)
+    return tx
+
 
 def log_ip(request, fname):
     client_ip = request.environ.get("HTTP_X_FORWARDED_FOR") or request.environ.get("REMOTE_ADDR")
@@ -319,7 +330,7 @@ def cached_get_block(headerhash: str) -> str:
             return compress(db_block)
         else:
             logger.error("ERROR CALLED GETBLOCK FOR NON EXISTENT BLOCK")
-    return "Hash hi nahi bheja LOL"
+    return "Invalid Hash"
 
 
 @app.post("/getblock")
@@ -438,31 +449,42 @@ def wallet():
 @app.post("/wallet")
 def wallet_post():
     log_ip(request, inspect.stack()[0][3])
-    receiver = str(request.forms.get("port"))
-    bounty = request.forms.get("amount")
+    number = int(request.forms.get("number"))
+   
     message = ""
     message_type = "info"
     try:
-        publickey = ""
-        if len(receiver) < 10:
-            wallet = get_wallet_from_db(receiver)
-            if wallet is not None:
-                publickey = wallet[1]
+        receivers = []
+        amounts = []
+        total_amount = 0
+
+        for i in range(0, number):
+            receiver = str(request.forms.get("port" + str(i)))
+            bounty = int(request.forms.get("amount" + str(i)))
+
+            publickey = ""
+            if len(receiver) < 10:
+                wallet = get_wallet_from_db(receiver)
+                if wallet is not None:
+                    publickey = wallet[1]
+                else:
+                    message = "Error with the Receiver Port ID, try again."
+                    message_type = "danger"
+                    return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
             else:
-                message = "Error with the Receiver Port ID, try again."
-                message_type = "danger"
-                return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
-        else:
-            publickey = receiver
-        amt = int(bounty)
-        if check_balance(MY_WALLET.public_key) > amt:
+                publickey = receiver
+            total_amount += bounty
+            receivers.append(publickey)
+            amounts.append(bounty)
+        if check_balance(MY_WALLET.public_key) >= total_amount:
             message = "Your transaction is sent, please wait for it to be mined!"
-            send_bounty(amt, publickey)
+            send_bounty(receivers, amounts)
         else:
             message = "You have Insufficient Balance!"
             message_type = "warning"
         return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
     except Exception as e:
+        logger.error(e)
         message = "Some Error Occured. Please try again later."
         message_type = "danger"
         return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)

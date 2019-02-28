@@ -1,16 +1,7 @@
 % include('header.html', title="wallet")
 
 <script>
-     $(document).ready(
-        function() 
-        { 
-            $("#hidden").click(function(){
-            let password = prompt("Toggle Mining: Enter the Password", "");
-            $.post("/mining", password, function(data, status){
-                alert(data);
-            });
-            });
-        });
+     
 </script>
 
 <div class="container">
@@ -41,28 +32,29 @@
    
     <br>
     <form action="" method="POST">
-        <div class="form-group">
-            <label for="port">
-                <h3>Public Key or Port: </h3>
-            </label>
-            <input type="text" class="form-control form-control-lg" id="port" placeholder="Enter PublicKey or Port of Receiver" name="port" autofocus>
+        <div class="form-inline">
+            <label class="sr-only" for="number">Number</label>
+            <input type="number" required class="form-control mb-2 mr-sm-2" min="1" step="1" data-bind="value:amount" class="form-control form-control-lg" id="number" placeholder="Number of Transactions" name="number" value="1">
         </div>
-        <div class="form-group">
-            <label for="amount">
-                <h3>Amount:</h3>
-            </label>
-            <input type="number" min="1" step="1" data-bind="value:amount" class="form-control form-control-lg" id="amount" placeholder="Enter Amount (VJcoins)" name="amount">
+        <div id="transaction">
+            <div class="form-inline">
+                <label class="sr-only" for="port1">Public Key</label>
+                <input type="text" class="form-control mb-2 mr-sm-2" id="port1" name="port1" placeholder="Public Key" autofocus>        
+                <label class="sr-only" for="amount1">Amount</label>
+                <div class="input-group mb-2 mr-sm-2">
+                    <input type="number" class="form-control" min="1" step="1" data-bind="value:amount" class="form-control form-control-lg" id="amount1" placeholder="Enter Amount (VJcoins)" name="amount1">            
+                </div>
+            </div>
         </div>
-        <button type="submit" class="btn btn-success">
-            <h4> Send </h4>
-        </button>
+        
+        <button type="submit" class="btn btn-success mr-sm-2 mb-6">Send</button>
     </form>
 </div>
 
 <script>
-    var HttpClient = function () {
+    let HttpClient = function () {
         this.get = function (aUrl, aCallback) {
-            var anHttpRequest = new XMLHttpRequest();
+            let anHttpRequest = new XMLHttpRequest();
             anHttpRequest.onreadystatechange = function () {
                 if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200)
                     aCallback(anHttpRequest.responseText);
@@ -72,13 +64,45 @@
         }
     }
     function update_balance() {
-        var client = new HttpClient();
+        let client = new HttpClient();
         client.get('/checkmybalance', function (response) {
             document.getElementById("bal").textContent = response;
         });
     }
     window.onload = update_balance;
     window.setInterval(update_balance, 5000);
+
+    function updateFields(){
+        let number = $("#number").val();
+        let container = $("#transaction");
+        container.empty();
+        for (i=0;i<number;i++){
+            let form =  '<div class="form-inline"> ' + 
+                        '<label class="sr-only" for="port'+ i +'">Public Key</label> ' +
+                        '<input type="text" class="form-control mb-2 mr-sm-2" id="port'+ i +'" name="port'+ i +'" placeholder="Public Key" autofocus> ' +        
+                        '<label class="sr-only" for="amount'+ i +'">Amount</label> ' +
+                        '<div class="input-group mb-2 mr-sm-2"> ' +
+                        '    <input type="number" class="form-control" min="1" step="1" data-bind="value:amount" class="form-control form-control-lg" id="amount'+ i +'" placeholder="Enter Amount (VJcoins)" name="amount'+ i +'"> ' +            
+                        '</div> ' +
+                        '</div>'
+            container.append(form);
+        }
+    }
+
+    $(document).ready(
+        function() 
+        { 
+            $("#hidden").click(function(){
+            let password = prompt("Toggle Mining: Enter the Password", "");
+            $.post("/mining", password, function(data, status){
+                alert(data);
+            });
+            });
+
+            $("#number").on('input', updateFields)
+        });
+
+
 </script>
 
 % include('footer.html')
