@@ -110,8 +110,6 @@ def sync(max_peer):
     fork_height = BLOCKCHAIN.active_chain.length
     r = requests.post(get_peer_url(max_peer) + "/getblockhashes", data={"myheight": fork_height})
     hash_list = json.loads(decompress(r.text.encode()))
-    # logger.debug("Received the Following HashList from peer " + str(get_peer_url(max_peer)))
-    # logger.debug(hash_list)
     for hhash in hash_list:
         block = receive_block_from_peer(max_peer, hhash)
         if not BLOCKCHAIN.add_block(block):
@@ -123,7 +121,6 @@ def sync(max_peer):
 # Periodically sync with all the peers
 def sync_with_peers():
     try:
-        logger.debug("Sync: Calling Sync")
         PEER_LIST = fetch_peer_list()
         new_peer_list = []
         for peer in PEER_LIST:
@@ -154,13 +151,8 @@ def send_bounty(receiver_public_keys: List[str], amounts: List[int]):
     total_amount = sum(amounts)
     if current_balance < total_amount:
         logger.debug("Insuficient balance ")
-        logger.debug("Current balance : " + str(current_balance))
-        logger.debug("You need " + str(current_balance - total_amount) + "more money")
-
     else:
         transaction = create_transaction(receiver_public_keys, amounts, MY_WALLET)
-
-        logger.debug(transaction)
         logger.info("Wallet: Attempting to Send Transaction")
         try:
             requests.post(
@@ -175,7 +167,6 @@ def send_bounty(receiver_public_keys: List[str], amounts: List[int]):
 
 
 def create_transaction(receiver_public_keys: List[str], amounts: List[int], w: Wallet)-> Transaction:
-
     vout = {}
     vin = {}
     current_amount = 0
@@ -205,8 +196,12 @@ def create_transaction(receiver_public_keys: List[str], amounts: List[int], w: W
     return tx
 
 
+def get_ip(request):
+    return request.environ.get("HTTP_X_FORWARDED_FOR") or request.environ.get("REMOTE_ADDR")
+
+
 def log_ip(request, fname):
-    client_ip = request.environ.get("HTTP_X_FORWARDED_FOR") or request.environ.get("REMOTE_ADDR")
+    client_ip = get_ip(request)
     iplogger.info(f"{client_ip} : Called function {fname}")
 
 @app.post("/checkBalance")
@@ -214,6 +209,7 @@ def checkingbalance():
     log_ip(request, inspect.stack()[0][3])
     data = request.json
     public_key = data["public_key"]
+    logger.debug(public_key)
     current_balance = check_balance(public_key)
     return str(current_balance)
 
@@ -227,10 +223,16 @@ def make_transaction():
     receiver_public_key = data["receiver_public_key"]
     sender_public_key = data["sender_public_key"]
 
+    if receiver_public_key <= consts.PUBLIC_KEY_LENGTH:
+        logger.debug("Invalid Receiver Public Key")
+        response.status = 400
+        return "Invalid Receiver Public Key"
+
     current_balance = check_balance(sender_public_key)
 
     if current_balance < bounty:
         logger.debug("Insufficient Balance to make Transaction")
+        response.status = 400
         return "Insufficient Balance to make Transaction, need more " + str(bounty - current_balance)
     else:
         transaction = Transaction(
@@ -277,6 +279,7 @@ def send_transaction():
             timeout=(5, 1),
         )
     except Exception as e:
+        response.status = 400
         logger.error("Wallet: Could not Send Transaction. Try Again." + str(e))
         return "Try Again"
     else:
@@ -589,10 +592,21 @@ def explorer():
     if prev < 0:
         prev = 0
     hdr_list = list(reversed(BLOCKCHAIN.active_chain.header_list))
-    indexes = [i for i in range(prev * 5, (prev + 1) * 5) if i < len(hdr_list)]
+    indexes = [i for i in range(prev * 8, (prev + 1) * 8) if i < len(hdr_list)]
     blocks = [Block.from_json(get_block_from_db(dhash(hdr_list[i]))).object() for i in indexes]
     transactions = list(BLOCKCHAIN.mempool)
     return template("explorer.html", blocks=blocks, transactions=transactions, prev=prev)
+
+
+@app.route("/block/<blockhash>", name="transaction")
+def block(blockhash):
+    log_ip(request, inspect.stack()[0][3])
+    try:
+        block = Block.from_json(get_block_from_db(blockhash)).object()
+    except Exception as e:
+        logger.debug("BLOCK/blockhash: " + str(e))
+        return template("error.html")
+    return template("block.html", block=block)
 
 
 @app.route("/transaction/<blockhash>/<txhash>", name="transaction")
@@ -605,7 +619,7 @@ def transaction(blockhash, txhash):
             if t.hash() == txhash:
                 tx = t
     except Exception as e:
-        logger.debug(e)
+        logger.debug("Transaction/bhash/tx: " + str(e))
         return template("error.html")
     return template("transaction.html", tx=tx, block=block)
 
@@ -622,7 +636,6 @@ def account(pubkey):
 def mining():
     log_ip(request, inspect.stack()[0][3])
     password = request.body.read().decode("utf-8")
-    logger.debug(password)
     hashed = b'\x11`\x1e\xdd\xd1\xb6\x80\x0f\xd4\xb0t\x90\x9b\xd3]\xa0\xcc\x1d\x04$\x8b\xb1\x19J\xaa!T5-\x9eJ\xfcI5\xc0\xbb\xf5\xb1\x9d\xba\xbef@\xa1)\xcf\x9b]c(R\x91\x0e\x9dMM\xb6\x94\xa9\xe2\x94il\x15'
     dk = hashlib.pbkdf2_hmac("sha512", password.encode("utf-8"), b'forgeteverythingthatyouthinkyouknow', 200000)
     if hashed == dk:
@@ -630,7 +643,7 @@ def mining():
         logger.info("Mining: " + str(not consts.NO_MINING))
         return "Mining Toggled, " + "NOT MINING" if consts.NO_MINING else "MINING"
     else:
-        return "Password Mismatch"
+        return "Password Mismatch," + "NOT MINING" if consts.NO_MINING else "MINING"
 
 
 @app.route("/<url:re:.+>")
