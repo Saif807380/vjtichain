@@ -34,17 +34,9 @@
     <form action="" method="POST">
         <div class="form-inline">
             <label class="sr-only" for="number">Number</label>
-            <input type="number" required class="form-control mb-2 mr-sm-2" min="1" step="1" data-bind="value:amount" class="form-control form-control-lg" id="number" placeholder="Number of Transactions" name="number" value="1">
+            <input type="number" required class="form-control mb-2 mr-sm-2" min="1" step="1" data-bind="value:amount" class="form-control form-control-lg" id="number" placeholder="Number of Transactions" name="number">
         </div>
         <div id="transaction">
-            <div class="form-inline">
-                <label class="sr-only" for="port1">Public Key</label>
-                <input type="text" class="form-control mb-2 mr-sm-2" id="port1" name="port1" placeholder="Public Key" autofocus>        
-                <label class="sr-only" for="amount1">Amount</label>
-                <div class="input-group mb-2 mr-sm-2">
-                    <input type="number" class="form-control" min="1" step="1" data-bind="value:amount" class="form-control form-control-lg" id="amount1" placeholder="Enter Amount (VJcoins)" name="amount1">            
-                </div>
-            </div>
         </div>
         
         <button type="submit" class="btn btn-success mr-sm-2 mb-6">Send</button>
@@ -99,7 +91,9 @@
             });
             });
 
-            $("#number").on('input', updateFields)
+            $("#number").on('input', updateFields);
+            $("#number").val(1);
+            updateFields();
         });
 
 

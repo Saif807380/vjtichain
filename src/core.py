@@ -98,7 +98,7 @@ class Transaction(DataClassJson):
                 txout_same = False
                 break
         return attrs_same and txin_same and txout_same
-    
+
     def hash(self):
         return dhash(self)
 

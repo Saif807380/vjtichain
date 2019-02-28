@@ -8,7 +8,7 @@ DATE_FORMAT = "%b %d %H:%M:%S"
 LOG_LEVEL = logging.DEBUG
 
 # DNS SEED CONSTANTS
-ENTRY_DURATION = 60 * 10    # duration in seconds
+ENTRY_DURATION = 60 * 10  # duration in seconds
 SEED_SERVER_URL = "http://localhost:8080"
 SEED_SERVER_PORT = 8080
 
