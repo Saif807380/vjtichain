@@ -28,7 +28,7 @@ MAX_MESSAGE_SIZE = 128  # Maximum Message Length for each Transaction
 FORK_CHAIN_HEIGHT = 7  # Keep only chains that are within this height of the active chain
 
 MAX_BLOCK_SIZE_KB = 4096
-MAX_COINS_POSSIBLE = 10000 * 5
+MAX_COINS_POSSIBLE = 100000 * 5
 
 INITIAL_BLOCK_REWARD = 5 * 100
 REWARD_UPDATE_INTERVAL = 20_000

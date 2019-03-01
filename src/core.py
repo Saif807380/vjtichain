@@ -143,7 +143,7 @@ class Transaction(DataClassJson):
         # All outputs in legal money range -3
         for index, out in self.vout.items():
             if out.amount > consts.MAX_COINS_POSSIBLE or out.amount <= 0:
-                logger.debug("Transaction: Invalid Amount")
+                logger.debug("Transaction: Invalid Amount" + str(out.amount))
                 return False
 
         # Verify all Inputs are valid - 4
@@ -379,7 +379,7 @@ class Chain:
 
             sum_of_all_inputs += tx_out.amount
 
-        if sum_of_all_inputs > consts.MAX_SCOINS_POSSIBLE or sum_of_all_inputs < 0:
+        if sum_of_all_inputs > consts.MAX_COINS_POSSIBLE or sum_of_all_inputs < 0:
             logger.debug("Chain: Invalid input Amount")
             return False
 
@@ -387,7 +387,7 @@ class Chain:
             sum_of_all_outputs += tx.amount
 
         # ensure sum of amounts of all inputs is in valid amount range
-        if sum_of_all_outputs > consts.MAX_SCOINS_POSSIBLE or sum_of_all_outputs < 0:
+        if sum_of_all_outputs > consts.MAX_COINS_POSSIBLE or sum_of_all_outputs < 0:
             logger.debug("Chain: Invalid output Amount")
             return False
 
