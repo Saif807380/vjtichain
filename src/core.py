@@ -462,10 +462,11 @@ class Chain:
                     timestamp = tx.timestamp
                     bhash = dhash(block.header)
                     thash = dhash(tx)
-                    history = generate_tx_hist(amount, pub_key, timestamp, bhash, thash)
+                    message = tx.message
+                    history = generate_tx_hist(amount, pub_key, timestamp, bhash, thash, message)
                     self.transaction_history.append(address, history)
 
-                    history = generate_tx_hist(-amount, address, timestamp, bhash, thash)
+                    history = generate_tx_hist(-amount, address, timestamp, bhash, thash, message)
                     self.transaction_history.append(pub_key, history)
 
             logger.info("Chain: Added Block " + str(block))

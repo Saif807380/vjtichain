@@ -81,11 +81,12 @@ def decompress(payload: bytes) -> str:
     return zl.decompress(b85decode(payload)).decode()
 
 
-def generate_tx_hist(amount, address, timestamp, bhash, thash):
+def generate_tx_hist(amount, address, timestamp, bhash, thash, message):
     data = {}
     data["amount"] = amount
     data["address"] = address
     data["timestamp"] = timestamp
     data["bhash"] = bhash
     data["thash"] = thash
+    data["message"] = message
     return json.dumps(data)
