@@ -510,7 +510,7 @@ class BlockChain:
                 else:
                     logger.error("Blockchain: Block does not exist in DB")
         except Exception as e:
-            logger.error("Blockchain: Exception " + str(e) + str(block))
+            logger.error("Blockchain: Exception " + str(e))
 
     @lock(block_lock)
     def add_block(self, block: Block):
