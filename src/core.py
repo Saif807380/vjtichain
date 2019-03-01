@@ -116,23 +116,20 @@ class Transaction(DataClassJson):
     def summarize(self):
         # Summarize the transaction and give sender address, receiver addresses and amount.
         pub_key = "SomePublicKey"
-        receiver = {}
+        receivers = {}
         for i in self.vin:
             pub_key = self.vin[i].pub_key
 
         for i in self.vout:
-            amt = self.vout[i].amount
             address = self.vout[i].address
             if address == pub_key:
                 continue
-            if address not in receiver:
-                receiver[address] = 0
-
-            receiver[address] += amt
-        return pub_key, receiver
+            if address not in receivers:
+                receivers[address] = 0
+            receivers[address] += self.vout[i].amount      
+        return pub_key, receivers
 
     def is_valid(self):
-
         # No empty inputs or outputs -1
         if len(self.vin) == 0 or len(self.vout) == 0:
             logger.debug("Transaction: Empty vin/vout")
@@ -145,7 +142,7 @@ class Transaction(DataClassJson):
 
         # All outputs in legal money range -3
         for index, out in self.vout.items():
-            if out.amount > consts.MAX_SCOINS_POSSIBLE or out.amount < 0:
+            if out.amount > consts.MAX_COINS_POSSIBLE or out.amount <= 0:
                 logger.debug("Transaction: Invalid Amount")
                 return False
 

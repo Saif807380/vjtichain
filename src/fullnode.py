@@ -151,6 +151,8 @@ def send_bounty(receiver_public_keys: List[str], amounts: List[int]):
     total_amount = sum(amounts)
     if current_balance < total_amount:
         logger.debug("Insuficient balance")
+    elif MY_WALLET.public_key in receiver_public_keys:
+        logger.debug("Cannot send to myself")
     else:
         transaction = create_transaction(receiver_public_keys, amounts, MY_WALLET.public_key, message="Authority: Faucet Money")
         transaction.sign(MY_WALLET)
@@ -164,7 +166,7 @@ def send_bounty(receiver_public_keys: List[str], amounts: List[int]):
             if r.status_code == 400:
                 logger.info("Wallet: Could not Send Transaction. Invalid Transaction")
             else:
-                logger.info("Wallet: Transaction Sent, Wait for it to be Mined" + str(r.status_code))
+                logger.info("Wallet: Transaction Sent, Wait for it to be Mined")
                 return True
         except Exception as e:
             logger.error("Wallet: Could not Send Transaction. Try Again." + str(e))
@@ -188,7 +190,9 @@ def create_transaction(receiver_public_keys: List[str], amounts: List[int], send
 
     for i, address in enumerate(receiver_public_keys):
         vout[i] = TxOut(amount=amounts[i], address=address)
-    vout[i + 1] = TxOut(amount=(current_amount - total_amount), address=sender_public_key)
+    change = (current_amount - total_amount)
+    if change > 0:
+        vout[i + 1] = TxOut(amount=change, address=sender_public_key)
 
     tx = Transaction(version=consts.MINER_VERSION, locktime=0, timestamp=int(time.time()), vin=vin, vout=vout, message=message)
     return tx
@@ -236,6 +240,10 @@ def make_transaction():
         logger.debug("Insufficient Balance to make Transaction")
         response.status = 400
         return "Insufficient Balance to make Transaction, need more " + str(bounty - current_balance)
+    elif sender_public_key == receiver_public_key:
+        logger.debug("Someone trying to send money to himself")
+        response.status = 400
+        return "Cannot send money to youself"
     else:
         transaction = create_transaction([receiver_public_key], [bounty], sender_public_key, message=message)
         data = {}
