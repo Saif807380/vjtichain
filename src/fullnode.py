@@ -150,24 +150,28 @@ def send_bounty(receiver_public_keys: List[str], amounts: List[int]):
     current_balance = check_balance(MY_WALLET.public_key)
     total_amount = sum(amounts)
     if current_balance < total_amount:
-        logger.debug("Insuficient balance ")
+        logger.debug("Insuficient balance")
     else:
-        transaction = create_transaction(receiver_public_keys, amounts, MY_WALLET.public_key)
+        transaction = create_transaction(receiver_public_keys, amounts, MY_WALLET.public_key, message="Authority: Faucet Money")
         transaction.sign(MY_WALLET)
         logger.info("Wallet: Attempting to Send Transaction")
         try:
-            requests.post(
+            r = requests.post(
                 "http://0.0.0.0:" + str(consts.MINER_SERVER_PORT) + "/newtransaction",
                 data=compress(transaction.to_json()),
                 timeout=(5, 1),
             )
+            if r.status_code == 400:
+                logger.info("Wallet: Could not Send Transaction. Invalid Transaction")
+            else:
+                logger.info("Wallet: Transaction Sent, Wait for it to be Mined" + str(r.status_code))
+                return True
         except Exception as e:
             logger.error("Wallet: Could not Send Transaction. Try Again." + str(e))
-        else:
-            logger.info("Wallet: Transaction Sent, Wait for it to be Mined")
+    return False
 
 
-def create_transaction(receiver_public_keys: List[str], amounts: List[int], sender_public_key) -> Transaction:
+def create_transaction(receiver_public_keys: List[str], amounts: List[int], sender_public_key, message="") -> Transaction:
     vout = {}
     vin = {}
     current_amount = 0
@@ -186,7 +190,7 @@ def create_transaction(receiver_public_keys: List[str], amounts: List[int], send
         vout[i] = TxOut(amount=amounts[i], address=address)
     vout[i + 1] = TxOut(amount=(current_amount - total_amount), address=sender_public_key)
 
-    tx = Transaction(version=consts.MINER_VERSION, locktime=0, timestamp=int(time.time()), vin=vin, vout=vout)
+    tx = Transaction(version=consts.MINER_VERSION, locktime=0, timestamp=int(time.time()), vin=vin, vout=vout, message=message)
     return tx
 
 
@@ -217,6 +221,9 @@ def make_transaction():
     bounty = int(data["bounty"])
     receiver_public_key = data["receiver_public_key"]
     sender_public_key = data["sender_public_key"]
+    message = "No Message"
+    if "message" in data:
+        message = data["message"]
 
     if len(receiver_public_key) < consts.PUBLIC_KEY_LENGTH:
         logger.debug("Invalid Receiver Public Key")
@@ -230,7 +237,7 @@ def make_transaction():
         response.status = 400
         return "Insufficient Balance to make Transaction, need more " + str(bounty - current_balance)
     else:
-        transaction = create_transaction([receiver_public_key], [bounty], sender_public_key)
+        transaction = create_transaction([receiver_public_key], [bounty], sender_public_key, message=message)
         data = {}
         data["send_this"] = transaction.to_json()
         transaction.vin = {}
@@ -249,11 +256,15 @@ def send_transaction():
     logger.debug(transaction)
     logger.info("Wallet: Attempting to Send Transaction")
     try:
-        requests.post(
+        r = requests.post(
             "http://0.0.0.0:" + str(consts.MINER_SERVER_PORT) + "/newtransaction",
             data=compress(transaction.to_json()),
             timeout=(5, 1),
         )
+        if r.status_code == 400:
+            response.status = 400
+            logger.error("Wallet: Could not Send Transaction. Invalid transaction")
+            return "Try Again"
     except Exception as e:
         response.status = 400
         logger.error("Wallet: Could not Send Transaction. Try Again." + str(e))
@@ -390,22 +401,26 @@ def process_new_transaction(request_data: bytes) -> str:
                     # Broadcast block to other peers
                     send_to_all_peers("/newtransaction", request_data)
                 else:
-                    return "Transaction Already received"
+                    logger.debug("The transation is not valid, not added to Mempool")
+                    return False, "Not Valid Transaction"
             else:
-                logger.debug("The transation is not valid, not added to Mempool")
-                return "Not Valid Transaction"
+                return True, "Transaction Already received"
         except Exception as e:
             logger.error("Server: New Transaction: Invalid tx received: " + str(e))
-            raise e
-            return "Not Valid Transaction"
-    return "Done"
+            return False, "Not Valid Transaction"
+    return True, "Done"
 
 
 # Transactions for all active chains
 @app.post("/newtransaction")
 def received_new_transaction():
     log_ip(request, inspect.stack()[0][3])
-    return process_new_transaction(request.body.read())
+    result, message = process_new_transaction(request.body.read())
+    if result:
+        response.status = 200
+    else:
+        response.status = 400
+    return message
 
 
 question = '''What is greater than God,
@@ -484,8 +499,12 @@ def wallet_post():
             receivers.append(publickey)
             amounts.append(bounty)
         if check_balance(MY_WALLET.public_key) >= total_amount:
-            message = "Your transaction is sent, please wait for it to be mined!"
-            send_bounty(receivers, amounts)
+            result = send_bounty(receivers, amounts)
+            if result:
+                message = "Your transaction is sent, please wait for it to be mined!"
+            else:
+                message = "Some Error Occured, Contact Admin."
+                message_type = "warning"
         else:
             message = "You have Insufficient Balance!"
             message_type = "warning"

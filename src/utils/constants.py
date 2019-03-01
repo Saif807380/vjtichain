@@ -23,6 +23,8 @@ HASH_LENGTH_HEX = 64  # 256 bit string is 64 hexa_dec string
 
 PUBLIC_KEY_LENGTH = 124  # Length of Armoured Public Key
 
+MAX_MESSAGE_SIZE = 128  # Maximum Message Length for each Transaction
+
 FORK_CHAIN_HEIGHT = 7  # Keep only chains that are within this height of the active chain
 
 MAX_BLOCK_SIZE_KB = 4096

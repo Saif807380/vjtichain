@@ -160,6 +160,11 @@ class Transaction(DataClassJson):
         if difference > 0:
             logger.debug("Transaction: Locktime Verify Failed")
             return False
+
+        # Limit Message size
+        if len(self.message) > consts.MAX_MESSAGE_SIZE:
+            logger.debug("Transaction: Message exceeds allowed length")
+            return False
         return True
 
     def object(self):
@@ -187,7 +192,7 @@ class Transaction(DataClassJson):
     version: int
 
     # Timestamp for this transaction
-    timestamp: int
+    timestamp: int    
 
     # Earliest time(Unix timestamp >500000000)
     # when this transaction may be added to the block chain.
@@ -199,6 +204,9 @@ class Transaction(DataClassJson):
 
     # The output transactions
     vout: Dict[int, TxOut]
+
+    # Message associated with this transaction
+    message: str = ""
 
 
 @dataclass
@@ -524,6 +532,7 @@ genesis_block_transaction = [
         version=1,
         locktime=0,
         timestamp=1535646190,
+        message="Genesis Transaction",
         vin={0: TxIn(payout=None, sig=consts.GENESIS_BLOCK_SIGNATURE, pub_key="Genesis")},
         vout={
             0: TxOut(
