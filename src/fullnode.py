@@ -408,12 +408,19 @@ def received_new_transaction():
     return process_new_transaction(request.body.read())
 
 
+question = '''What is greater than God,
+    more evil than the devil,
+    the poor have it,
+    the rich need it,
+    and if you eat it, you'll die?'''
+actual_answer = "nothing"
+
 @app.get("/")
 def home():
     log_ip(request, inspect.stack()[0][3])
     message = ""
     message_type = "info"
-    return template("index.html", message=message, message_type=message_type)
+    return template("index.html", message=message, message_type=message_type, question=question)
 
 
 @app.post("/")
@@ -425,14 +432,14 @@ def puzzle():
     answer = request.forms.get("answer")
     pubkey = request.forms.get("pubkey")
 
-    if answer.lower() == "Hello".lower():
-        logger.debug("Valid Answer")
-        message = "Well Done"
+    if answer.lower() == actual_answer.lower():
+        logger.debug("Valid Answer, Rewarding " + pubkey)
+        message = "Well Done!"
     else:
-        message = "Invalid Answer"
+        message = "Invalid Answer!"
         message_type = "danger"
 
-    return template("index.html", message=message, message_type=message_type)
+    return template("index.html", message=message, message_type=message_type, question=question)
 
 
 @app.get('/about')

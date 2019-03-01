@@ -1,11 +1,77 @@
 % include('header.html', title="about")
 
 <div class="jumbotron text-white">
-    <h1 class="display-4">Hello, world!</h1>
-    <p class="lead">Some Info about the Puzzles and Money</p>
+    <h1 class="display-4">Welcome to VJTI Chain!</h1>
+    <p class="lead">Blockchain for Global Good</p>
     <hr class="my-4" style="border-top: 1px solid rgba(255, 255, 255, 0.5);">
-    <p>How can you spend the coins?</p>
-    <p>FAQ?</p>
+
+    <div>
+        <div id="accordion">
+            <div class="card bg-dark-transparent text-white border-secondary mb-3">
+                <div class="card-header" id="headingOne">
+                    <h4 class="mb-0">
+                        <button class="btn btn-link text-decoration-none" data-toggle="collapse"
+                            data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            What is VJTI Chain?
+                        </button>
+                    </h4>
+                </div>
+
+                <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                    <div class="card-body">
+                        <p>
+                            A complete implementation of a Proof of Authority (POA) Blockchain writtern in python 3.7
+                            from scratch. The system allows for transfer of tokens known as 'VJCoins'.
+                        </p>
+                        <p>
+                            You can find the source code <a
+                                href="https://github.com/VJTI-AI-Blockchain/vjtichain">here</a>.
+                        </p>
+                        <p>
+                            Also you can download the Android Wallet App from <a
+                                href="https://play.google.com/store/apps/details?id=com.vjti.blockchain.wallet">here</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-dark-transparent text-white border-secondary mb-3">
+                <div class="card-header" id="headingTwo">
+                    <h4 class="mb-0">
+                        <button class="btn btn-link collapsed text-decoration-none" data-toggle="collapse" data-target="#collapseTwo"
+                            aria-expanded="false" aria-controls="collapseTwo">
+                            Where can I use VJcoins?
+                        </button>
+                    </h4>
+                </div>
+                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+                    <div class="card-body">
+                        <p>Canteen</p>
+                        <p>Xerox Center</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-dark-transparent text-white border-secondary mb-3">
+                <div class="card-header" id="headingThree">
+                    <h4 class="mb-0">
+                        <button class="btn btn-link collapsed text-decoration-none" data-toggle="collapse" data-target="#collapseThree"
+                            aria-expanded="false" aria-controls="collapseThree">
+                            How can I earn VJCoins?
+                        </button>
+                    </h4>
+                </div>
+                <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+                    <div class="card-body">
+                        <p>
+                            Weekly Challenges
+                        </p>
+                        <p>
+                            Class Assignments
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 % include('footer.html')

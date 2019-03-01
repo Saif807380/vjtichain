@@ -3,12 +3,12 @@
 <div class="container">
 
     % if message!= "":
-        <div class="alert alert-{{ message_type }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
+    <div class="alert alert-{{ message_type }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
     % end
 
     <div class="card bg-dark-transparent text-white border-secondary mb-3">
@@ -18,9 +18,7 @@
         <div class="card-body">
             <h5 class="card-title">Question</h5>
             <p class="card-text">
-                The Question: Lorem ipsum dolor sit amet consectetur, adipisicing elit. Nam illum iusto et ratione dicta
-                placeat dolores, repellendus veritatis ex minus! Expedita quos error esse delectus eaque suscipit cumque
-                natus dolore.
+                {{ question }}
             </p>
             <form method="POST" action="">
                 <div class="form-group">
@@ -42,7 +40,7 @@
             Winners
         </div>
         <div class="card-body">
-            <table class="table table-dark-transparent">
+            <table class="table table-responsive table-dark-transparent">
                 <thead>
                     <tr>
                         <th scope="col">#</th>
@@ -54,14 +52,14 @@
                 <tbody>
                     <tr>
                         <th scope="row">1</th>
-                        <td>MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg==
+                        <td><a class="text-decoration-none" href="/address/">MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg==</a>
                         </td>
                         <td class="nowrap">1510800212</td>
                         <td><a href="">Tx</a></td>
                     </tr>
                     <tr>
                         <th scope="row">2</th>
-                        <td>MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg==
+                        <td><a class="text-decoration-none" href="/address/">MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg==</a>
                         </td>
                         <td class="nowrap">15108003212</td>
                         <td><a href="">Tx</a></td>
@@ -70,7 +68,6 @@
             </table>
         </div>
     </div>
-
 </div>
 
 % include('footer.html')

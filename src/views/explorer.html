@@ -24,7 +24,7 @@
                                 % active = "active"
                             % end
                             <a class="list-group-item list-group-item-action text-right {{ active }}" id="list-{{ i }}-list"
-                            data-toggle="list" href="#list-{{ i }}" role="tab" aria-controls="{{ i }}"><span class="d-none d-lg-inline font-italic">{{ str(block)[-12:] }}</span>   <span class="text-dark font-weight-bold">{{ block.header.height }}</span></a>
+                            data-toggle="list" href="#list-{{ i }}" role="tab" aria-controls="{{ i }}"><span class="d-none d-lg-inline font-italic">{{ str(block)[-12:] }}</span>   <span class="text-dark font-weight-bold nowrap">{{ block.header.height }}</span></a>
                         % end
                         </div>
                     </div>
@@ -41,7 +41,7 @@
                                         <table class="table table-borderless table-transparent text-white">
                                             <tr>
                                                 <th scope="row">Block Hash</th>
-                                                <td><a href="/block/{{str(block) }}">{{ str(block) }}</a></td>
+                                                <td><a class="text-decoration-none" href="/block/{{str(block) }}">{{ str(block) }}</a></td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">Block Number</th>
@@ -53,7 +53,7 @@
                                             </tr>
                                             <tr>
                                                 <th scope="row">Previous Block Hash</th>
-                                                <td><a href="/block/{{ block.header.prev_block_hash }}">{{ block.header.prev_block_hash }}</a></td>
+                                                <td><a class="text-decoration-none" href="/block/{{ block.header.prev_block_hash }}">{{ block.header.prev_block_hash }}</a></td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">Merkle Root</th>
