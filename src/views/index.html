@@ -13,19 +13,19 @@
 
     <div class="card bg-dark-transparent text-white border-secondary mb-3">
         <div class="card-header">
-            This Week's Puzzle
+            <h3>Faucet</h3>
         </div>
         <div class="card-body">
-            <h5 class="card-title">Question</h5>
+            <!-- <h5 class="card-title"></h5>
             <p class="card-text">
                 {{ question }}
-            </p>
+            </p> -->
             <form method="POST" action="">
                 <div class="form-group">
-                    <label for="answer">Answer</label>
-                    <input type="text" class="form-control" id="answer" name="answer" aria-describedby="ansHelp"
+                    <label for="uuid">Unique ID</label>
+                    <input type="text" class="form-control" id="uuid" name="uuid" aria-describedby="ansHelp"
                         placeholder="Enter Answer">
-                    <small id="ansHelp" class="form-text text-muted">Case-insensitive.</small>
+                    <small id="ansHelp" class="form-text text-muted">It was emailed to you.</small>
                 </div>
                 <div class="form-group">
                     <label for="pubkey">Public Key</label>
@@ -35,7 +35,7 @@
             </form>
         </div>
     </div>
-    <div class="card bg-dark-transparent text-white border-secondary mb-3">
+    <!-- <div class="card bg-dark-transparent text-white border-secondary mb-3">
         <div class="card-header">
             Winners
         </div>
@@ -67,7 +67,7 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </div> -->
 </div>
 
 % include('footer.html')
