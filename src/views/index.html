@@ -24,12 +24,13 @@
                 <div class="form-group">
                     <label for="uuid">Unique ID</label>
                     <input type="text" class="form-control" id="uuid" name="uuid" aria-describedby="ansHelp"
-                        placeholder="Enter Answer">
-                    <small id="ansHelp" class="form-text text-muted">It was emailed to you.</small>
+                        placeholder="Enter Unique ID">
+                    <small id="ansHelp" class="form-text text-muted">6 characters, case sensitive. It was emailed to you.</small>
                 </div>
                 <div class="form-group">
                     <label for="pubkey">Public Key</label>
-                    <input type="text" class="form-control" id="pubkey" name="pubkey" placeholder="Your Public Key">
+                    <input type="text" class="form-control" id="pubkey" name="pubkey" aria-describedby="keyHelp" placeholder="Your Public Key">
+                    <small id="keyHelp" class="form-text text-muted">Copy your Public Key from your profile in the Wallet App.</small>
                 </div>
                 <button type="submit" class="btn btn-primary">Submit</button>
             </form>

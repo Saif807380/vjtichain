@@ -2,19 +2,19 @@
     "authorities": [
         {
             "name": "Node 0",
-            "pubkey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg==",
+            "pubkey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE0tmjDG6v51ELMieRGuTfOgmfTe7BzNBsHQseqygX58+MQjNyjoOPkphghhYFpIFPzVORAI6Qief9lrncuWsOMg==",
             "from": 0,
             "to": 28795
         },
         {
             "name": "Node 1",
-            "pubkey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg==",
+            "pubkey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE0tmjDG6v51ELMieRGuTfOgmfTe7BzNBsHQseqygX58+MQjNyjoOPkphghhYFpIFPzVORAI6Qief9lrncuWsOMg==",
             "from": 28800,
             "to": 57600
         },
         {
             "name": "Node 0",
-            "pubkey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg==",
+            "pubkey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE0tmjDG6v51ELMieRGuTfOgmfTe7BzNBsHQseqygX58+MQjNyjoOPkphghhYFpIFPzVORAI6Qief9lrncuWsOMg==",
             "from": 57605,
             "to": 86395
         }

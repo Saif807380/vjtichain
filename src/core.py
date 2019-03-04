@@ -529,21 +529,17 @@ genesis_block_transaction = [
     Transaction(
         version=1,
         locktime=0,
-        timestamp=1535646190,
+        timestamp=1551698572,
         message="Genesis Transaction",
         vin={0: TxIn(payout=None, sig=consts.GENESIS_BLOCK_SIGNATURE, pub_key="Genesis")},
         vout={
             0: TxOut(
-                amount=100000,
-                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8b4UlG/Ugma8NJx9JLpKE9MeSNacnQe+aSPXVBStafo4OjNm8Hlf32BFyw/yAftiVx7w72rIP+kJUVLyhHW3yg==",
+                amount=1000000,
+                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE0tmjDG6v51ELMieRGuTfOgmfTe7BzNBsHQseqygX58+MQjNyjoOPkphghhYFpIFPzVORAI6Qief9lrncuWsOMg==",
             ),
             1: TxOut(
-                amount=100000,
-                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE+nU1YCwX6JgQRPhMC4WCxyit86SeEtxyXz/o6zO5Qx/jgGQBLBDysDKnQ4x2ViIWcUyTciQIpu76OPN2qR8dMg==",
-            ),
-            2: TxOut(
-                amount=100000,
-                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKWOBAv4bhwG4FOvfLCX/loeK2FSw77PRpiR4alqqE8Dpm7vVZS2ixyNF1t8g0FVNxpoCUPjvMu7rIhoDkhnrPg==",
+                amount=1000000,
+                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE3s5Iqp9VzlL7ngLfR2xb1RIGfuo+siL/zaZdeFblI8pnU5SpJCFEEMZDQBnEEPIOz9bv9lK46AwV3vLcN1VpCA==",
             ),
         },
     )
@@ -555,7 +551,7 @@ genesis_block_header = BlockHeader(
     prev_block_hash=None,
     height=0,
     merkle_root=merkle_hash(genesis_block_transaction),
-    timestamp=1550577352,
+    timestamp=1551698580,
     signature="",
 )
 genesis_block = Block(header=genesis_block_header, transactions=genesis_block_transaction)
