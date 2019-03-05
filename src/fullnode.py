@@ -462,7 +462,7 @@ def puzzle():
 
     uuid = request.forms.get("uuid")
     pubkey = request.forms.get("pubkey")
-    amounts = [500]
+    amounts = [300]
     
     if uuid in valid_ids:
         logger.debug("Valid Answer, Rewarding " + pubkey)

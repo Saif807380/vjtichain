@@ -1,8 +1,11 @@
 % include('header.html', title="explorer")
 % from datetime import datetime
 
-<div class="container">
-    <h1 class="text-center">Block Details</h1>
+<div class="card text-center bg-dark-transparent text-white">
+    <div class="card-header">
+        <h1 class="text-center">Block Details</h1>
+    </div>
+    <div class="card-body">
     <table class="table table-bordered table-dark-transparent">
         <tr>
             <th scope="row">Block Hash</th>
@@ -42,6 +45,7 @@
             </td>
         </tr>
     </table>
+    </div>
 </div>
 
 % include('footer.html')
