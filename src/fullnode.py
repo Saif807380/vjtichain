@@ -487,58 +487,58 @@ def about():
     return template("about.html")
 
 
-# @app.get("/wallet")
-# def wallet():
-#     log_ip(request, inspect.stack()[0][3])
-#     return template("wallet.html", message="", message_type="", pubkey=MY_WALLET.public_key)
+@app.get("/wallet")
+def wallet():
+    log_ip(request, inspect.stack()[0][3])
+    return template("wallet.html", message="", message_type="", pubkey=MY_WALLET.public_key)
 
 
-# @app.post("/wallet")
-# def wallet_post():
-#     log_ip(request, inspect.stack()[0][3])
-#     number = int(request.forms.get("number"))
+@app.post("/wallet")
+def wallet_post():
+    log_ip(request, inspect.stack()[0][3])
+    number = int(request.forms.get("number"))
 
-#     message = ""
-#     message_type = "info"
-#     try:
-#         receivers = []
-#         amounts = []
-#         total_amount = 0
+    message = ""
+    message_type = "info"
+    try:
+        receivers = []
+        amounts = []
+        total_amount = 0
 
-#         for i in range(0, number):
-#             receiver = str(request.forms.get("port" + str(i)))
-#             bounty = int(request.forms.get("amount" + str(i)))
+        for i in range(0, number):
+            receiver = str(request.forms.get("port" + str(i)))
+            bounty = int(request.forms.get("amount" + str(i)))
 
-#             publickey = ""
-#             if len(receiver) < 10:
-#                 wallet = get_wallet_from_db(receiver)
-#                 if wallet is not None:
-#                     publickey = wallet[1]
-#                 else:
-#                     message = "Error with the Receiver Port ID, try again."
-#                     message_type = "danger"
-#                     return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
-#             else:
-#                 publickey = receiver
-#             total_amount += bounty
-#             receivers.append(publickey)
-#             amounts.append(bounty)
-#         if check_balance(MY_WALLET.public_key) >= total_amount:
-#             result = send_bounty(receivers, amounts)
-#             if result:
-#                 message = "Your transaction is sent, please wait for it to be mined!"
-#             else:
-#                 message = "Some Error Occured, Contact Admin."
-#                 message_type = "warning"
-#         else:
-#             message = "You have Insufficient Balance!"
-#             message_type = "warning"
-#         return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
-#     except Exception as e:
-#         logger.error(e)
-#         message = "Some Error Occured. Please try again later."
-#         message_type = "danger"
-#         return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
+            publickey = ""
+            if len(receiver) < 10:
+                wallet = get_wallet_from_db(receiver)
+                if wallet is not None:
+                    publickey = wallet[1]
+                else:
+                    message = "Error with the Receiver Port ID, try again."
+                    message_type = "danger"
+                    return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
+            else:
+                publickey = receiver
+            total_amount += bounty
+            receivers.append(publickey)
+            amounts.append(bounty)
+        if check_balance(MY_WALLET.public_key) >= total_amount:
+            result = send_bounty(receivers, amounts)
+            if result:
+                message = "Your transaction is sent, please wait for it to be mined!"
+            else:
+                message = "Some Error Occured, Contact Admin."
+                message_type = "warning"
+        else:
+            message = "You have Insufficient Balance!"
+            message_type = "warning"
+        return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
+    except Exception as e:
+        logger.error(e)
+        message = "Some Error Occured. Please try again later."
+        message_type = "danger"
+        return template("wallet.html", message=message, message_type=message_type, pubkey=MY_WALLET.public_key)
 
 
 @app.get("/checkmybalance")

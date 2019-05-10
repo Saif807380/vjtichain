@@ -8,7 +8,6 @@ __pycache__/
 .vscode/
 src/*.sql
 src/wallet/*
-src/uuids.json
 
 # C extensions
 *.so
