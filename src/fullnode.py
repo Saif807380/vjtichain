@@ -36,7 +36,11 @@ miner = Authority()
 def mining_thread_task():
     while True:
         if not miner.is_mining() and not consts.NO_MINING:
-            miner.start_mining(BLOCKCHAIN.mempool, BLOCKCHAIN.active_chain, MY_WALLET)
+            try:
+                miner.start_mining(BLOCKCHAIN.mempool, BLOCKCHAIN.active_chain, MY_WALLET)
+            except Exception as e:
+                miner.stop_mining()
+                logger.debug("Miner: Error while mining:" + str(e))
         time.sleep(consts.MINING_INTERVAL_THRESHOLD // 2)
 
 
