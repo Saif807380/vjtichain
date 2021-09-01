@@ -535,11 +535,11 @@ genesis_block_transaction = [
         vout={
             0: TxOut(
                 amount=1000000,
-                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE0tmjDG6v51ELMieRGuTfOgmfTe7BzNBsHQseqygX58+MQjNyjoOPkphghhYFpIFPzVORAI6Qief9lrncuWsOMg==",
+                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEkG6u6ytTlg/T1zVt8DnLGbtM4phdUBXw3JgIMFbWKSCEzIwupwVpjBoG75xrTAK69FNOrZ2WAXp6YQdHnNUi/Q==",
             ),
             1: TxOut(
                 amount=1000000,
-                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE3s5Iqp9VzlL7ngLfR2xb1RIGfuo+siL/zaZdeFblI8pnU5SpJCFEEMZDQBnEEPIOz9bv9lK46AwV3vLcN1VpCA==",
+                address="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEzNVlgtHa7FXV12Nf6BazxgrZkGYzWZ+amNBPA3OfIcBwROkz0wznZppn3rrRw2TPaYJBY5fdSOxURi2Blp8sLw==",
             ),
         },
     )

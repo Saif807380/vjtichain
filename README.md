@@ -16,35 +16,47 @@ Use `conda` to create an env using the `environment.yml` file and run `src/fulln
 
 #### Installing Dependencies
 ```bash
-sudo apt-get install python-dev libgmp3-dev wget gcc #for fastecdsa
+$ sudo apt-get install python-dev libgmp3-dev wget gcc #for fastecdsa
 ```
 
 #### Installing Miniconda
 ```bash
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh # Follow the instructions and ensure that conda is added to shell path.
+$ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+
+$ bash Miniconda3-latest-Linux-x86_64.sh -b -u -p ~/miniconda3 # Follow the instructions and ensure that conda is added to shell path.
 ```
 
 #### Creating conda environment
 ```bash
 # Inside the Repo directory
-cd somechain/
-conda env create -f=./environment.yml
+$ cd vjtichain/
+
+$ conda env create -f=./environment.yml
 # If creation fails, you might need to delete the environment before retrying
 # conda env remove -n pychain
 ```
 
+#### Keys
+
+Create a new directory called `wallet` inside the `src` directory and put the [keyfiles](https://drive.google.com/drive/folders/1PtD4f61ON4NkOK_iARYHnM2kJaPXC0sE?usp=sharing) (`.key` & `.pub` both) there.
+
 #### Running
+
 ```bash
-cd src/
-source activate pychain
-# You will need to run 2 processes. We suggest using a terminal multiplexer like tmux or screen.
-# tmux
-python dns_seed.py # Run the central dns server for peer discovery
-python fullnode.py -p 9000 -n -q # Run the full node on port(-p) 9000, (-n) new blockchain from genesis i.e. no restore and in quiet mode(-q)
+$ cd src/
+
+$ mkdir wallet # create the directory if not present
+
+$ conda activate pychain
+
+$ python dns_seed.py # Run the central dns server for peer discovery in one terminal tab
+
+$ python fullnode.py -p 9000 -n # Run the full node on port(-p) 9000, (-n) new blockchain from genesis i.e. no restore only for the first time
+
 # To terminate press ctrl+C twice.
 ```
 
+### Optional Steps (Not for development)
 
 #### Add DDOS ban
 ```bash

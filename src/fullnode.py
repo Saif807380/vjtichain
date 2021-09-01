@@ -260,6 +260,47 @@ def make_transaction():
         data["sign_this"] = transaction.to_json()
         return json.dumps(data)
 
+@app.post("/rewardStudent")
+def reward_student():
+    log_ip(request, inspect.stack()[0][3])
+    data = request.json
+    data["sender_public_key"] = MY_WALLET.public_key
+    try: 
+        r = requests.post(
+            "http://0.0.0.0:" + str(consts.MINER_SERVER_PORT) + "/makeTransaction",
+            data=json.dumps(data),
+            headers={"Content-type": "application/json"}
+        )
+        if r.status_code == 400:
+            response.status = 400
+            logger.error("Wallet: Could not Make Transaction. Invalid transaction")
+            return "Try Again"
+        tx_to_be_signed = r.json()["sign_this"]
+        tx_to_be_sent = r.json()["send_this"]
+        sig = MY_WALLET.sign(tx_to_be_signed)
+        data = {}
+        data["signature"] = sig
+        data["transaction"] = tx_to_be_sent
+        r = requests.post(
+            "http://0.0.0.0:" + str(consts.MINER_SERVER_PORT) + "/sendTransaction",
+            data=json.dumps(data),
+            headers={"Content-type": "application/json"}
+        )
+        if r.status_code == 400:
+            response.status = 400
+            logger.error("Wallet: Could not Send Transaction. Invalid transaction")
+            return "Try Again"
+        logger.info("Wallet: Transaction Sent, Wait for it to be Mined")
+        return True
+    except Exception as e:
+        response.status = 400
+        logger.error("Wallet: Could not Send Transaction. Try Again." + str(e))
+        return "Try Again"
+
+@app.get("/newWallet")
+def new_wallet():
+    wallet = Wallet().generate_address()
+    return json.dumps({"public_key": wallet[1], "private_key": wallet[0]})
 
 @app.post("/sendTransaction")
 def send_transaction():
