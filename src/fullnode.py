@@ -291,7 +291,7 @@ def reward_student():
             logger.error("Wallet: Could not Send Transaction. Invalid transaction")
             return "Try Again"
         logger.info("Wallet: Transaction Sent, Wait for it to be Mined")
-        return True
+        return json.dumps({ "message": True })
     except Exception as e:
         response.status = 400
         logger.error("Wallet: Could not Send Transaction. Try Again." + str(e))
