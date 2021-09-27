@@ -300,7 +300,7 @@ def reward_student():
 @app.get("/newWallet")
 def new_wallet():
     wallet = Wallet().generate_address()
-    return json.dumps({"public_key": wallet[1], "private_key": wallet[0]})
+    return json.dumps({"public_key": wallet[1], "private_key": str(wallet[0])})
 
 @app.post("/sendTransaction")
 def send_transaction():
